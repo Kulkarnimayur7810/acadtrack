@@ -62,21 +62,21 @@ function ProjectCard({
 
   return (
     <Card
-      className="flex flex-col gap-3 h-full hover:shadow-[--shadow-md] transition-shadow group"
+      className="flex flex-col gap-3 h-full hover:shadow-sm hover:border-[#D1D5DB] transition-all group bg-white border-[#E5E7EB] cursor-pointer"
       onClick={() => onSelect(project)}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-[--radius-md] bg-[--color-accent-muted] flex items-center justify-center flex-shrink-0 group-hover:bg-[--color-accent-light] transition-colors">
-            <FolderGit2 className="w-4 h-4 text-[--color-accent]" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-[#EEF2FF] flex items-center justify-center flex-shrink-0 group-hover:bg-[#E0E7FF] transition-colors">
+            <FolderGit2 className="w-4 h-4 text-[#4338CA]" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-[--color-text-primary] truncate group-hover:text-[--color-accent] transition-colors">
+            <h3 className="text-sm font-semibold text-[#202124] truncate group-hover:text-[#4338CA] transition-colors">
               {project.title}
             </h3>
             {project.college && (
-              <p className="text-xs text-[--color-text-tertiary] truncate">{project.college}</p>
+              <p className="text-xs text-[#6B7280] truncate">{project.college}</p>
             )}
           </div>
         </div>
@@ -85,7 +85,7 @@ function ProjectCard({
 
       {/* Description */}
       {project.description && (
-        <p className="text-sm text-[--color-text-secondary] line-clamp-2 leading-relaxed">
+        <p className="text-sm text-[#4B5563] line-clamp-2 leading-relaxed">
           {project.description}
         </p>
       )}
@@ -93,23 +93,23 @@ function ProjectCard({
       {/* Meta row */}
       <div className="flex flex-wrap gap-x-3 gap-y-1">
         {project.semester && (
-          <span className="flex items-center gap-1 text-xs text-[--color-text-tertiary]">
-            <BookOpen className="w-3 h-3" />
+          <span className="flex items-center gap-1 text-xs text-[#6B7280]">
+            <BookOpen className="w-3.5 h-3.5 text-[#9CA3AF]" />
             {project.semester}
           </span>
         )}
         {project.category && (
-          <span className="text-xs text-[--color-text-tertiary]">
+          <span className="text-xs text-[#6B7280]">
             {getCategoryLabel(project.category)}
           </span>
         )}
       </div>
 
       {/* Progress */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5 pt-1">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-[--color-text-tertiary]">Progress</span>
-          <span className="text-xs font-medium text-[--color-text-secondary]">{progress}%</span>
+          <span className="text-xs text-[#6B7280]">Progress</span>
+          <span className="text-xs font-semibold text-[#202124]">{progress}%</span>
         </div>
         <ProgressBar
           value={progress}
@@ -121,23 +121,23 @@ function ProjectCard({
       {project.submission_deadline && (
         <div
           className={cn(
-            'flex items-center gap-1.5 text-xs mt-auto pt-2 border-t border-[--color-border]',
+            'flex items-center gap-1.5 text-xs mt-auto pt-2.5 border-t border-[#E5E7EB]',
             overdue
-              ? 'text-[--color-danger]'
+              ? 'text-red-600 font-medium'
               : days !== null && days <= 14
-              ? 'text-[--color-warning]'
-              : 'text-[--color-text-tertiary]'
+              ? 'text-amber-600 font-medium'
+              : 'text-[#6B7280]'
           )}
         >
           <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
           {overdue ? (
-            <span className="font-medium">Overdue — {formatDate(project.submission_deadline)}</span>
+            <span>Overdue — {formatDate(project.submission_deadline)}</span>
           ) : days === 0 ? (
-            <span className="font-medium">Due today</span>
+            <span>Due today</span>
           ) : days !== null && days > 0 ? (
             <span>
               Due {formatDate(project.submission_deadline)}{' '}
-              <span className="text-[--color-text-tertiary]">({days}d left)</span>
+              <span className="text-[#9CA3AF]">({days}d left)</span>
             </span>
           ) : (
             <span>Due {formatDate(project.submission_deadline)}</span>
@@ -203,13 +203,13 @@ export default function ProjectsListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[--color-surface]">
+    <div className="min-h-screen bg-[#F7F7F5]">
       {/* Page Header */}
-      <div className="bg-white border-b border-[--color-border] px-4 sm:px-8 py-4">
+      <div className="bg-white border-b border-[#E5E7EB] px-4 sm:px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-[--color-text-primary]">Projects</h1>
-            <p className="text-sm text-[--color-text-tertiary] mt-0.5">
+            <h1 className="text-lg font-semibold text-[#202124]">Projects</h1>
+            <p className="text-xs text-[#6B7280] mt-0.5">
               {isLoading
                 ? 'Loading…'
                 : projects && projects.length > 0
@@ -281,14 +281,14 @@ export default function ProjectsListPage() {
               type="button"
               onClick={handleNewProject}
               className={cn(
-                'flex flex-col items-center justify-center gap-2 h-full min-h-[180px]',
-                'border-2 border-dashed border-[--color-border] rounded-[--radius-lg]',
-                'text-[--color-text-tertiary] hover:border-[--color-accent] hover:text-[--color-accent]',
-                'transition-colors cursor-pointer bg-transparent'
+                'flex flex-col items-center justify-center gap-2 h-full min-h-[180px] p-6',
+                'border-2 border-dashed border-[#D1D5DB] rounded-lg bg-white/50',
+                'text-[#6B7280] hover:border-[#4338CA] hover:text-[#4338CA] hover:bg-[#EEF2FF]/30',
+                'transition-all cursor-pointer'
               )}
             >
-              <div className="w-9 h-9 rounded-full bg-[--color-surface-raised] flex items-center justify-center">
-                <Plus className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-full bg-[#F1F1EE] flex items-center justify-center">
+                <Plus className="w-4 h-4 text-[#6B7280]" />
               </div>
               <span className="text-sm font-medium">New Project</span>
             </button>

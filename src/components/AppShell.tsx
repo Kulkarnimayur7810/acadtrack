@@ -60,7 +60,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="flex h-screen bg-[--color-background] overflow-hidden text-[--color-text-primary]">
+    <div className="flex h-screen bg-[#F7F7F5] overflow-hidden text-[#202124]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -73,24 +73,24 @@ export function AppShell({ children }: AppShellProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex flex-col bg-white border-r border-[--color-border] transition-transform duration-200 ease-in-out',
+          'fixed inset-y-0 left-0 z-30 flex flex-col bg-white border-r border-[#E5E7EB] transition-transform duration-200 ease-in-out',
           'w-60 lg:relative lg:translate-x-0 shrink-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
         aria-label="Main navigation"
       >
         {/* Brand Header */}
-        <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-[--color-border] shrink-0">
-          <div className="w-7 h-7 rounded-[--radius-md] bg-[--color-accent] flex items-center justify-center shrink-0 shadow-xs">
+        <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-[#E5E7EB] shrink-0 bg-white">
+          <div className="w-7 h-7 rounded-[6px] bg-[#4338CA] flex items-center justify-center shrink-0 shadow-xs">
             <FolderKanban size={15} className="text-white" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-sm font-semibold tracking-tight text-[--color-text-primary] block truncate">AcadTrack</span>
-            <span className="text-[10px] text-[--color-text-tertiary] block -mt-0.5 truncate">Academic Project Hub</span>
+            <span className="text-sm font-semibold tracking-tight text-[#202124] block truncate">AcadTrack</span>
+            <span className="text-[10px] text-[#6B7280] block -mt-0.5 truncate">Academic Project Hub</span>
           </div>
           <button
             onClick={toggleSidebar}
-            className="lg:hidden text-[--color-text-tertiary] hover:text-[--color-text-primary] p-1 rounded-[--radius-sm] transition-colors"
+            className="lg:hidden text-[#9CA3AF] hover:text-[#202124] p-1 rounded transition-colors"
             aria-label="Close sidebar"
           >
             <X size={16} />
@@ -98,22 +98,22 @@ export function AppShell({ children }: AppShellProps) {
         </div>
 
         {/* Project switcher dropdown */}
-        <div className="px-3 py-2.5 border-b border-[--color-border] shrink-0 relative">
+        <div className="px-3 py-2.5 border-b border-[#E5E7EB] shrink-0 relative bg-white">
           <button
             onClick={() => setProjectMenuOpen(!projectMenuOpen)}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-[--radius-md] border border-[--color-border] bg-[--color-surface] hover:bg-[--color-surface-raised] hover:border-[--color-border-strong] transition-all text-left"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-[6px] border border-[#E5E7EB] bg-[#F7F7F5] hover:bg-[#F1F1EE] hover:border-[#D1D5DB] transition-all text-left"
             aria-expanded={projectMenuOpen}
             aria-haspopup="true"
           >
-            <div className="w-5 h-5 rounded-[--radius-sm] bg-[--color-accent] text-white shrink-0 flex items-center justify-center text-[10px] font-bold">
+            <div className="w-5 h-5 rounded-[4px] bg-[#4338CA] text-white shrink-0 flex items-center justify-center text-[10px] font-bold">
               {currentProject?.title?.slice(0, 1).toUpperCase() || 'P'}
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-semibold text-[--color-text-primary] block truncate">
+              <span className="text-xs font-semibold text-[#202124] block truncate">
                 {currentProject?.title || 'Select a project'}
               </span>
             </div>
-            <ChevronDown size={13} className={cn("text-[--color-text-tertiary] shrink-0 transition-transform duration-150", projectMenuOpen && "rotate-180")} />
+            <ChevronDown size={13} className={cn("text-[#9CA3AF] shrink-0 transition-transform duration-150", projectMenuOpen && "rotate-180")} />
           </button>
 
           {projectMenuOpen && (
@@ -178,8 +178,8 @@ export function AppShell({ children }: AppShellProps) {
         </div>
 
         {/* Navigation list */}
-        <nav className="flex-1 overflow-y-auto px-3 py-2.5 space-y-0.5" role="navigation">
-          <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[--color-text-tertiary]">
+        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1 bg-white" role="navigation">
+          <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
             Workspace
           </div>
           {NAV_ITEMS.map(({ to, icon: Icon, label }) => {
@@ -190,56 +190,56 @@ export function AppShell({ children }: AppShellProps) {
                 to={to}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  'flex items-center gap-2.5 px-2.5 py-1.5 rounded-[--radius-md] text-xs font-medium transition-colors relative',
+                  'flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-xs font-medium transition-colors relative',
                   active
-                    ? 'bg-[--color-accent-light] text-[--color-accent]'
-                    : 'text-[--color-text-secondary] hover:bg-[--color-surface] hover:text-[--color-text-primary]'
+                    ? 'bg-[#EEF2FF] text-[#4338CA] font-semibold border-l-2 border-l-[#4338CA]'
+                    : 'text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#202124]'
                 )}
                 aria-current={active ? 'page' : undefined}
               >
-                <Icon size={15} className={cn('shrink-0', active ? 'text-[--color-accent]' : 'text-[--color-text-tertiary]')} />
+                <Icon size={16} className={cn('shrink-0', active ? 'text-[#4338CA]' : 'text-[#9CA3AF]')} />
                 <span className="truncate">{label}</span>
               </Link>
             )
           })}
 
-          <div className="pt-3 mt-3 border-t border-[--color-border] space-y-0.5">
-            <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[--color-text-tertiary]">
+          <div className="pt-3 mt-3 border-t border-[#E5E7EB] space-y-1">
+            <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
               Quick Actions
             </div>
             <Link
               to="/projects/new"
               onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-[--radius-md] text-xs font-medium text-[--color-text-secondary] hover:bg-[--color-surface] hover:text-[--color-text-primary] transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-xs font-medium text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#202124] transition-colors"
             >
-              <Plus size={15} className="text-[--color-text-tertiary]" />
+              <Plus size={16} className="text-[#9CA3AF]" />
               <span>New Project</span>
             </Link>
             <Link
               to="/settings"
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                'flex items-center gap-2.5 px-2.5 py-1.5 rounded-[--radius-md] text-xs font-medium transition-colors',
+                'flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-xs font-medium transition-colors',
                 isActive('/settings')
-                  ? 'bg-[--color-accent-light] text-[--color-accent]'
-                  : 'text-[--color-text-secondary] hover:bg-[--color-surface] hover:text-[--color-text-primary]'
+                  ? 'bg-[#EEF2FF] text-[#4338CA] font-semibold border-l-2 border-l-[#4338CA]'
+                  : 'text-[#6B7280] hover:bg-[#F7F7F5] hover:text-[#202124]'
               )}
             >
-              <Settings size={15} className="text-[--color-text-tertiary]" />
+              <Settings size={16} className={cn('shrink-0', isActive('/settings') ? 'text-[#4338CA]' : 'text-[#9CA3AF]')} />
               <span>Settings</span>
             </Link>
           </div>
         </nav>
 
         {/* User profile footer */}
-        <div className="px-3 py-3 border-t border-[--color-border] shrink-0 bg-[--color-surface]">
+        <div className="px-3 py-3 border-t border-[#E5E7EB] shrink-0 bg-[#F7F7F5]">
           <div className="flex items-center gap-2.5">
             <Avatar name={profile?.full_name} size="sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[--color-text-primary] truncate leading-tight">
+              <p className="text-xs font-semibold text-[#202124] truncate leading-tight">
                 {profile?.full_name || 'Academic Scholar'}
               </p>
-              <p className="text-[11px] text-[--color-text-tertiary] truncate leading-tight mt-0.5">
+              <p className="text-[11px] text-[#6B7280] truncate leading-tight mt-0.5">
                 {profile?.email || user?.email || 'Logged in'}
               </p>
             </div>
@@ -248,7 +248,7 @@ export function AppShell({ children }: AppShellProps) {
                 signOut()
                 navigate('/login')
               }}
-              className="p-1 rounded text-[--color-text-tertiary] hover:text-[--color-danger] hover:bg-[--color-danger-light] transition-colors shrink-0"
+              className="p-1 rounded text-[#9CA3AF] hover:text-[#B91C1C] hover:bg-[#FEF2F2] transition-colors shrink-0"
               title="Sign out"
               aria-label="Sign out"
             >
@@ -259,29 +259,29 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       {/* Main App Container */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#F7F7F5]">
         {/* Top bar */}
-        <header className="flex items-center gap-3 px-4 py-2.5 border-b border-[--color-border] bg-white shrink-0 lg:px-6">
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-[#E5E7EB] bg-white shrink-0 lg:px-6 shadow-xs">
           <button
             onClick={toggleSidebar}
-            className="lg:hidden text-[--color-text-tertiary] hover:text-[--color-text-primary] transition-colors p-1 rounded"
+            className="lg:hidden text-[#6B7280] hover:text-[#202124] transition-colors p-1 rounded"
             aria-label="Toggle navigation menu"
           >
             <Menu size={18} />
           </button>
 
           {/* Breadcrumb Trail */}
-          <div className="flex items-center gap-1.5 text-xs min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-xs min-w-0 flex-1">
             <Link
               to="/dashboard"
-              className="text-[--color-text-tertiary] hover:text-[--color-text-primary] font-medium truncate max-w-[200px]"
+              className="text-[#6B7280] hover:text-[#202124] font-medium truncate max-w-[200px]"
             >
               {currentProject?.title || 'Academic Projects'}
             </Link>
             {location.pathname !== '/dashboard' && (
               <>
-                <ChevronRight size={12} className="text-[--color-text-tertiary] shrink-0" />
-                <span className="text-[--color-text-primary] font-semibold capitalize truncate">
+                <ChevronRight size={13} className="text-[#9CA3AF] shrink-0" />
+                <span className="text-[#202124] font-semibold capitalize truncate">
                   {location.pathname.slice(1).replace(/-/g, ' ')}
                 </span>
               </>
@@ -295,7 +295,7 @@ export function AppShell({ children }: AppShellProps) {
         </header>
 
         {/* Page Content Body */}
-        <main className="flex-1 overflow-y-auto bg-[--color-surface]">
+        <main className="flex-1 overflow-y-auto bg-[#F7F7F5]">
           {children}
         </main>
       </div>

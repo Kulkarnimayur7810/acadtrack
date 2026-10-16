@@ -422,8 +422,8 @@ export default function CalendarPage() {
                         key={dateKey}
                         onClick={() => setSelectedDate(day)}
                         className={cn(
-                          'min-h-[90px] p-1.5 border-r border-b border-[--color-border] cursor-pointer transition-colors relative flex flex-col',
-                          isSelected ? 'bg-blue-50/40' : 'hover:bg-[--color-surface]',
+                          'min-h-[90px] p-1.5 border-r border-b border-[#E5E7EB] cursor-pointer transition-colors relative flex flex-col',
+                          isSelected ? 'bg-[#EEF2FF]/60' : 'hover:bg-[#F7F7F5]',
                           isCurrentDay && 'font-semibold'
                         )}
                       >
@@ -432,16 +432,16 @@ export default function CalendarPage() {
                             className={cn(
                               'text-xs px-1.5 py-0.5 rounded-full inline-block',
                               isCurrentDay
-                                ? 'bg-[--color-accent] text-white font-bold'
+                                ? 'bg-[#4338CA] text-white font-bold'
                                 : isSelected
-                                ? 'text-[--color-accent] font-bold'
-                                : 'text-[--color-text-secondary]'
+                                ? 'text-[#4338CA] font-bold'
+                                : 'text-[#4B5563]'
                             )}
                           >
                             {format(day, 'd')}
                           </span>
                           {dayEvents.length > 0 && (
-                            <span className="text-[10px] text-[--color-text-tertiary]">
+                            <span className="text-[10px] text-[#6B7280]">
                               {dayEvents.length}
                             </span>
                           )}

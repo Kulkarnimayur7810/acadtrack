@@ -368,12 +368,12 @@ export default function ResearchPage() {
                 return (
                   <div
                     key={p.id}
-                    className="bg-white border border-[--color-border] rounded-[--radius-lg] p-4 shadow-xs hover:border-[--color-border-strong] transition-all space-y-2"
+                    className="bg-white border border-[#E5E7EB] rounded-lg p-4 shadow-xs hover:border-[#D1D5DB] transition-all space-y-2"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-bold text-[--color-text-primary]">
+                          <h3 className="text-sm font-bold text-[#202124]">
                             {p.title}
                           </h3>
                           <span
@@ -388,7 +388,7 @@ export default function ResearchPage() {
                           </span>
                         </div>
 
-                        <div className="text-xs text-[--color-text-tertiary] mt-1 flex items-center gap-3 flex-wrap">
+                        <div className="text-xs text-[#6B7280] mt-1 flex items-center gap-3 flex-wrap">
                           {p.authors && <span>Authors: {p.authors}</span>}
                           {p.year && <span>Year: {p.year}</span>}
                           {p.journal && <span>Journal / Venue: {p.journal}</span>}
@@ -405,7 +405,7 @@ export default function ResearchPage() {
                               status: e.target.value as ResearchPaper['status'],
                             })
                           }
-                          className="text-xs border border-[--color-border] rounded px-2 py-1 bg-white font-medium text-[--color-text-primary]"
+                          className="text-xs border border-[#E5E7EB] rounded px-2 py-1 bg-white font-medium text-[#202124]"
                           aria-label="Update paper status"
                         >
                           <option value="identified">Identified</option>
@@ -416,7 +416,7 @@ export default function ResearchPage() {
 
                         <button
                           onClick={() => deletePaperMutation.mutate(p.id)}
-                          className="text-[--color-text-tertiary] hover:text-[--color-danger] p-1 transition-colors"
+                          className="text-[#9CA3AF] hover:text-red-600 p-1 transition-colors"
                           title="Delete paper"
                           aria-label="Delete paper"
                         >
@@ -426,15 +426,15 @@ export default function ResearchPage() {
                     </div>
 
                     {p.notes && (
-                      <p className="text-xs text-[--color-text-secondary] bg-[--color-surface] p-2.5 rounded-[--radius-md]">
+                      <p className="text-xs text-[#4B5563] bg-[#F7F7F5] border border-[#E5E7EB]/60 p-2.5 rounded-md">
                         <strong>Literature Notes & Gaps:</strong> {p.notes}
                       </p>
                     )}
 
                     <div className="flex items-center gap-3 pt-1 text-xs">
                       {p.doi && (
-                        <span className="text-[--color-text-tertiary]">
-                          DOI: <code>{p.doi}</code>
+                        <span className="text-[#6B7280]">
+                          DOI: <code className="bg-[#F1F1EE] px-1 py-0.5 rounded text-[11px]">{p.doi}</code>
                         </span>
                       )}
                       {p.url && (
@@ -442,7 +442,7 @@ export default function ResearchPage() {
                           href={p.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[--color-accent] hover:underline flex items-center gap-1 font-medium"
+                          className="text-[#4338CA] hover:underline flex items-center gap-1 font-medium"
                         >
                           <ExternalLink className="w-3.5 h-3.5" /> View Paper / Document
                         </a>

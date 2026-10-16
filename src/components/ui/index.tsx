@@ -14,21 +14,21 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'secondary', size = 'md', loading, children, disabled, ...props }, ref) => {
-    const base = 'inline-flex items-center gap-2 font-medium rounded-[--radius-md] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent] disabled:opacity-50 disabled:cursor-not-allowed'
+    const base = 'inline-flex items-center justify-center gap-2 font-medium rounded-[6px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338CA] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed select-none'
 
     const variants = {
-      primary: 'bg-[--color-accent] text-white hover:bg-[--color-accent-hover]',
-      secondary: 'bg-[--color-surface] text-[--color-text-primary] border border-[--color-border] hover:bg-[--color-surface-raised]',
-      ghost: 'text-[--color-text-secondary] hover:bg-[--color-surface] hover:text-[--color-text-primary]',
-      danger: 'bg-[--color-danger-light] text-[--color-danger] border border-[--color-danger-muted] hover:bg-[--color-danger-muted]',
-      outline: 'border border-[--color-accent] text-[--color-accent] hover:bg-[--color-accent-light]',
+      primary: 'bg-[#4338CA] text-white hover:bg-[#3730A3] active:bg-[#312E81] shadow-xs border border-transparent',
+      secondary: 'bg-white text-[#202124] border border-[#E5E7EB] hover:bg-[#F7F7F5] hover:border-[#D1D5DB] shadow-xs',
+      ghost: 'text-[#6B7280] hover:bg-[#F1F1EE] hover:text-[#202124]',
+      danger: 'bg-[#FEF2F2] text-[#B91C1C] border border-[#FEE2E2] hover:bg-[#FEE2E2]',
+      outline: 'border border-[#4338CA] text-[#4338CA] hover:bg-[#EEF2FF]',
     }
 
     const sizes = {
       xs: 'px-2 py-1 text-xs',
-      sm: 'px-2.5 py-1.5 text-sm',
-      md: 'px-3 py-2 text-sm',
-      lg: 'px-4 py-2.5 text-base',
+      sm: 'px-2.5 py-1.5 text-xs',
+      md: 'px-3.5 py-2 text-sm',
+      lg: 'px-4 py-2.5 text-sm',
     }
 
     return (
@@ -39,7 +39,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && (
-          <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+          <svg className="animate-spin w-4 h-4 text-current" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -67,13 +67,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1 min-w-0">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-[--color-text-primary]">
+          <label htmlFor={inputId} className="text-xs font-semibold text-[#202124]">
             {label}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[--color-text-tertiary]">
+            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
               {icon}
             </div>
           )}
@@ -81,18 +81,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full rounded-[--radius-md] border border-[--color-border] bg-white px-3 py-2 text-sm text-[--color-text-primary] placeholder:text-[--color-text-placeholder] transition-colors',
-              'focus:outline-none focus:border-[--color-accent] focus:ring-1 focus:ring-[--color-accent]',
-              'disabled:bg-[--color-surface] disabled:cursor-not-allowed',
-              error && 'border-[--color-danger] focus:border-[--color-danger] focus:ring-[--color-danger]',
+              'w-full rounded-[6px] border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#202124] placeholder:text-[#9CA3AF] transition-colors',
+              'focus:outline-none focus:border-[#4338CA] focus:ring-1 focus:ring-[#4338CA]',
+              'disabled:bg-[#F7F7F5] disabled:cursor-not-allowed',
+              error && 'border-[#B91C1C] focus:border-[#B91C1C] focus:ring-[#B91C1C]',
               icon && 'pl-8',
               className
             )}
             {...props}
           />
         </div>
-        {error && <p className="text-xs text-[--color-danger]">{error}</p>}
-        {hint && !error && <p className="text-xs text-[--color-text-tertiary]">{hint}</p>}
+        {error && <p className="text-xs text-[#B91C1C]">{error}</p>}
+        {hint && !error && <p className="text-xs text-[#6B7280]">{hint}</p>}
       </div>
     )
   }
@@ -113,7 +113,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="flex flex-col gap-1 min-w-0">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-[--color-text-primary]">
+          <label htmlFor={inputId} className="text-xs font-semibold text-[#202124]">
             {label}
           </label>
         )}
@@ -121,14 +121,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'w-full rounded-[--radius-md] border border-[--color-border] bg-white px-3 py-2 text-sm text-[--color-text-primary] placeholder:text-[--color-text-placeholder] transition-colors resize-y min-h-[80px]',
-            'focus:outline-none focus:border-[--color-accent] focus:ring-1 focus:ring-[--color-accent]',
-            error && 'border-[--color-danger]',
+            'w-full rounded-[6px] border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#202124] placeholder:text-[#9CA3AF] transition-colors resize-y min-h-[80px]',
+            'focus:outline-none focus:border-[#4338CA] focus:ring-1 focus:ring-[#4338CA]',
+            error && 'border-[#B91C1C]',
             className
           )}
           {...props}
         />
-        {error && <p className="text-xs text-[--color-danger]">{error}</p>}
+        {error && <p className="text-xs text-[#B91C1C]">{error}</p>}
       </div>
     )
   }
@@ -151,7 +151,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="flex flex-col gap-1 min-w-0">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-[--color-text-primary]">
+          <label htmlFor={inputId} className="text-xs font-semibold text-[#202124]">
             {label}
           </label>
         )}
@@ -159,9 +159,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'w-full rounded-[--radius-md] border border-[--color-border] bg-white px-3 py-2 text-sm text-[--color-text-primary] transition-colors',
-            'focus:outline-none focus:border-[--color-accent] focus:ring-1 focus:ring-[--color-accent]',
-            error && 'border-[--color-danger]',
+            'w-full rounded-[6px] border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#202124] transition-colors',
+            'focus:outline-none focus:border-[#4338CA] focus:ring-1 focus:ring-[#4338CA]',
+            error && 'border-[#B91C1C]',
             className
           )}
           {...props}
@@ -171,7 +171,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        {error && <p className="text-xs text-[--color-danger]">{error}</p>}
+        {error && <p className="text-xs text-[#B91C1C]">{error}</p>}
       </div>
     )
   }
@@ -190,19 +190,19 @@ interface BadgeProps {
 
 export function Badge({ children, variant = 'default', size = 'sm', className }: BadgeProps) {
   const variants = {
-    default: 'bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border]',
-    success: 'bg-[--color-success-light] text-[--color-success]',
-    warning: 'bg-[--color-warning-light] text-[--color-warning]',
-    danger: 'bg-[--color-danger-light] text-[--color-danger]',
-    info: 'bg-[--color-accent-light] text-[--color-accent]',
-    purple: 'bg-[--color-purple-light] text-[--color-purple]',
+    default: 'bg-[#F1F1EE] text-[#4B5563] border border-[#E5E7EB]',
+    success: 'bg-[#F0FDF4] text-[#15803D] border border-[#DCFCE7]',
+    warning: 'bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7]',
+    danger: 'bg-[#FEF2F2] text-[#B91C1C] border border-[#FEE2E2]',
+    info: 'bg-[#EEF2FF] text-[#4338CA] border border-[#E0E7FF]',
+    purple: 'bg-[#F5F3FF] text-[#6D28D9] border border-[#EDE9FE]',
   }
   const sizes = {
-    sm: 'px-1.5 py-0.5 text-xs',
-    md: 'px-2 py-1 text-sm',
+    sm: 'px-2 py-0.5 text-xs',
+    md: 'px-2.5 py-1 text-sm',
   }
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-[--radius-sm] font-medium', variants[variant], sizes[size], className)}>
+    <span className={cn('inline-flex items-center gap-1 rounded-[4px] font-medium', variants[variant], sizes[size], className)}>
       {children}
     </span>
   )
@@ -257,13 +257,13 @@ interface CardProps {
 }
 
 export function Card({ children, className, onClick, padding = 'md' }: CardProps) {
-  const paddings = { none: '', sm: 'p-3', md: 'p-4', lg: 'p-6' }
+  const paddings = { none: '', sm: 'p-3', md: 'p-4', lg: 'p-5 sm:p-6' }
   return (
     <div
       className={cn(
-        'bg-white border border-[--color-border] rounded-[--radius-lg] shadow-[--shadow-sm]',
+        'bg-white border border-[#E5E7EB] rounded-[8px] shadow-xs text-[#202124]',
         paddings[padding],
-        onClick && 'cursor-pointer hover:border-[--color-border-strong] hover:shadow-[--shadow-md] transition-all',
+        onClick && 'cursor-pointer hover:border-[#D1D5DB] hover:shadow-xs transition-all',
         className
       )}
       onClick={onClick}
@@ -319,25 +319,25 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
       />
       <div
         className={cn(
-          'relative w-full rounded-[--radius-xl] bg-white border border-[--color-border] shadow-2xl flex flex-col max-h-[88vh] my-auto overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150',
+          'relative w-full rounded-[10px] bg-white border border-[#E5E7EB] shadow-xl flex flex-col max-h-[88vh] my-auto overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150',
           sizes[size]
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[--color-border] shrink-0 bg-white">
-            <h2 className="text-base font-semibold text-[--color-text-primary] tracking-tight">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB] shrink-0 bg-white">
+            <h2 className="text-base font-semibold text-[#202124] tracking-tight">{title}</h2>
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-[--radius-md] text-[--color-text-tertiary] hover:bg-[--color-surface] hover:text-[--color-text-primary] transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-[6px] text-[#9CA3AF] hover:bg-[#F7F7F5] hover:text-[#202124] transition-colors"
               aria-label="Close dialog"
             >
               <X size={16} />
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-6 py-5 overscroll-contain">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-5 overscroll-contain bg-white text-[#202124]">{children}</div>
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-[--color-border] shrink-0 bg-[--color-surface] rounded-b-[--radius-xl]">
+          <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-[#E5E7EB] shrink-0 bg-[#F7F7F5] rounded-b-[10px]">
             {footer}
           </div>
         )}
@@ -353,7 +353,7 @@ export function Spinner({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg';
   const sizes = { sm: 'w-4 h-4', md: 'w-6 h-6', lg: 'w-8 h-8' }
   return (
     <svg
-      className={cn('animate-spin text-[--color-accent]', sizes[size], className)}
+      className={cn('animate-spin text-[#4338CA]', sizes[size], className)}
       viewBox="0 0 24 24"
       fill="none"
     >
@@ -376,10 +376,10 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-      {icon && <div className="text-[--color-text-tertiary]">{icon}</div>}
+      {icon && <div className="text-[#9CA3AF]">{icon}</div>}
       <div>
-        <p className="text-sm font-medium text-[--color-text-secondary]">{title}</p>
-        {description && <p className="text-xs text-[--color-text-tertiary] mt-1 max-w-xs mx-auto">{description}</p>}
+        <p className="text-sm font-semibold text-[#202124]">{title}</p>
+        {description && <p className="text-xs text-[#6B7280] mt-1 max-w-xs mx-auto leading-relaxed">{description}</p>}
       </div>
       {action && action}
     </div>
@@ -400,16 +400,16 @@ interface ProgressBarProps {
 
 export function ProgressBar({ value, max = 100, size = 'sm', variant = 'default', label = false, className }: ProgressBarProps) {
   const pct = Math.min(100, Math.round((value / max) * 100))
-  const sizes = { sm: 'h-1.5', md: 'h-2.5' }
+  const sizes = { sm: 'h-1.5', md: 'h-2' }
   const colors = {
-    default: 'bg-[--color-accent]',
-    success: 'bg-[--color-success]',
-    warning: 'bg-[--color-warning]',
-    danger: 'bg-[--color-danger]',
+    default: 'bg-[#4338CA]',
+    success: 'bg-[#15803D]',
+    warning: 'bg-[#B45309]',
+    danger: 'bg-[#B91C1C]',
   }
   return (
     <div className={cn('flex items-center gap-2 min-w-0', className)}>
-      <div className={cn('flex-1 bg-[--color-surface-raised] rounded-full overflow-hidden min-w-0', sizes[size])}>
+      <div className={cn('flex-1 bg-[#E5E7EB] rounded-full overflow-hidden min-w-0', sizes[size])}>
         <div
           className={cn('h-full rounded-full transition-all', colors[variant])}
           style={{ width: `${pct}%` }}
@@ -419,7 +419,7 @@ export function ProgressBar({ value, max = 100, size = 'sm', variant = 'default'
           aria-valuemax={100}
         />
       </div>
-      {label && <span className="text-xs text-[--color-text-tertiary] flex-shrink-0 w-8 text-right">{pct}%</span>}
+      {label && <span className="text-xs text-[#6B7280] font-medium flex-shrink-0 w-8 text-right">{pct}%</span>}
     </div>
   )
 }
@@ -428,7 +428,7 @@ export function ProgressBar({ value, max = 100, size = 'sm', variant = 'default'
 // Divider
 // ──────────────────────────────────────────
 export function Divider({ className }: { className?: string }) {
-  return <hr className={cn('border-0 border-t border-[--color-border]', className)} />
+  return <hr className={cn('border-0 border-t border-[#E5E7EB]', className)} />
 }
 
 // ──────────────────────────────────────────
@@ -444,7 +444,7 @@ export function Tooltip({ content, children, className }: TooltipProps) {
   return (
     <span className={cn('relative group', className)}>
       {children}
-      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-xs text-white bg-gray-900 rounded-[--radius-sm] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50">
+      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-xs text-white bg-[#202124] rounded-[4px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-sm">
         {content}
       </span>
     </span>
@@ -465,8 +465,8 @@ export function SectionHeader({ title, subtitle, action, className }: SectionHea
   return (
     <div className={cn('flex items-center justify-between gap-4 min-w-0', className)}>
       <div className="min-w-0">
-        <h2 className="text-base font-semibold text-[--color-text-primary] truncate">{title}</h2>
-        {subtitle && <p className="text-sm text-[--color-text-tertiary] mt-0.5">{subtitle}</p>}
+        <h2 className="text-sm font-bold text-[#202124] truncate">{title}</h2>
+        {subtitle && <p className="text-xs text-[#6B7280] mt-0.5">{subtitle}</p>}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
@@ -485,16 +485,16 @@ interface TabsProps {
 
 export function Tabs({ tabs, active, onChange, className }: TabsProps) {
   return (
-    <div className={cn('flex items-center border-b border-[--color-border]', className)}>
+    <div className={cn('flex items-center border-b border-[#E5E7EB]', className)}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={cn(
-            'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-1.5',
+            'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-2',
             active === tab.id
-              ? 'border-[--color-accent] text-[--color-accent]'
-              : 'border-transparent text-[--color-text-secondary] hover:text-[--color-text-primary] hover:border-[--color-border]'
+              ? 'border-[#4338CA] text-[#4338CA] font-semibold'
+              : 'border-transparent text-[#6B7280] hover:text-[#202124] hover:border-[#D1D5DB]'
           )}
           aria-selected={active === tab.id}
           role="tab"
@@ -504,8 +504,8 @@ export function Tabs({ tabs, active, onChange, className }: TabsProps) {
             <span className={cn(
               'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
               active === tab.id
-                ? 'bg-[--color-accent-light] text-[--color-accent]'
-                : 'bg-[--color-surface-raised] text-[--color-text-tertiary]'
+                ? 'bg-[#EEF2FF] text-[#4338CA]'
+                : 'bg-[#F1F1EE] text-[#6B7280]'
             )}>
               {tab.count}
             </span>

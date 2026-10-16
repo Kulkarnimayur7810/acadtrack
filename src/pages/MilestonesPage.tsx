@@ -208,19 +208,19 @@ export default function MilestonesPage() {
       </div>
 
       {/* Weighted Progress Card */}
-      <div className="bg-white border border-[--color-border] rounded-[--radius-xl] p-5 shadow-xs space-y-3">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold text-[--color-text-primary] flex items-center gap-2">
-              <Scale className="w-4 h-4 text-[--color-accent]" />
+            <div className="text-sm font-semibold text-[#202124] flex items-center gap-2">
+              <Scale className="w-4 h-4 text-[#4338CA]" />
               Overall Weighted Milestone Progress
             </div>
-            <p className="text-xs text-[--color-text-tertiary] mt-0.5">
+            <p className="text-xs text-[#6B7280] mt-0.5">
               Calculated using explicit milestone weight points ({completedWeight} of {totalWeight}{' '}
               pts completed)
             </p>
           </div>
-          <div className="text-2xl font-bold text-[--color-text-primary]">
+          <div className="text-2xl font-bold text-[#202124]">
             {weightedPercentage}%
           </div>
         </div>
@@ -231,26 +231,26 @@ export default function MilestonesPage() {
           variant={weightedPercentage === 100 ? 'success' : 'default'}
         />
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs text-[--color-text-secondary]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs text-[#6B7280]">
           <div>
             Total Milestones:{' '}
-            <strong className="text-[--color-text-primary]">{milestones.length}</strong>
+            <strong className="text-[#202124]">{milestones.length}</strong>
           </div>
           <div>
             Completed:{' '}
-            <strong className="text-[--color-success]">
+            <strong className="text-green-700">
               {milestones.filter((m) => m.status === 'completed').length}
             </strong>
           </div>
           <div>
             In Progress:{' '}
-            <strong className="text-[--color-warning]">
+            <strong className="text-amber-700">
               {milestones.filter((m) => m.status === 'in_progress').length}
             </strong>
           </div>
           <div>
             Delayed:{' '}
-            <strong className="text-[--color-danger]">
+            <strong className="text-red-600">
               {
                 milestones.filter(
                   (m) =>
@@ -296,12 +296,12 @@ export default function MilestonesPage() {
               <div
                 key={m.id}
                 className={cn(
-                  'bg-white border rounded-[--radius-lg] p-4 shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4',
+                  'bg-white border rounded-lg p-4 shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4',
                   m.status === 'completed'
-                    ? 'border-[--color-border] bg-white opacity-80'
+                    ? 'border-[#E5E7EB] bg-white opacity-85'
                     : isDelayed
                     ? 'border-red-300 border-l-4 border-l-red-500'
-                    : 'border-[--color-border] hover:border-[--color-border-strong]'
+                    : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
                 )}
               >
                 <div className="space-y-1.5 flex-1 min-w-0">
@@ -310,14 +310,14 @@ export default function MilestonesPage() {
                       className={cn(
                         'text-sm font-bold',
                         m.status === 'completed'
-                          ? 'line-through text-[--color-text-tertiary]'
-                          : 'text-[--color-text-primary]'
+                          ? 'line-through text-[#9CA3AF]'
+                          : 'text-[#202124]'
                       )}
                     >
                       {m.title}
                     </span>
 
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[--color-surface] border border-[--color-border] text-[--color-text-secondary]">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#F7F7F5] border border-[#E5E7EB] text-[#4B5563]">
                       Weight: {m.weight} pts
                     </span>
 

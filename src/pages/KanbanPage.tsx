@@ -31,12 +31,12 @@ type Task = Database['public']['Tables']['tasks']['Row']
 type Member = Database['public']['Tables']['project_members']['Row'] & { profile?: Database['public']['Tables']['profiles']['Row'] }
 
 const COLUMNS: { id: Task['status']; label: string; color: string }[] = [
-  { id: 'backlog', label: 'Backlog', color: 'text-[--color-text-tertiary]' },
-  { id: 'todo', label: 'To Do', color: 'text-[--color-accent]' },
-  { id: 'in_progress', label: 'In Progress', color: 'text-[--color-warning]' },
-  { id: 'in_review', label: 'In Review', color: 'text-[--color-purple]' },
-  { id: 'blocked', label: 'Blocked', color: 'text-[--color-danger]' },
-  { id: 'done', label: 'Done', color: 'text-[--color-success]' },
+  { id: 'backlog', label: 'Backlog', color: 'text-[#6B7280]' },
+  { id: 'todo', label: 'To Do', color: 'text-[#4338CA]' },
+  { id: 'in_progress', label: 'In Progress', color: 'text-[#B45309]' },
+  { id: 'in_review', label: 'In Review', color: 'text-[#6D28D9]' },
+  { id: 'blocked', label: 'Blocked', color: 'text-[#B91C1C]' },
+  { id: 'done', label: 'Done', color: 'text-[#15803D]' },
 ]
 
 // ─── Data hooks ────────────────────────────────────────────────────────────────
@@ -97,11 +97,11 @@ function TaskCard({ task, members, onOpen, onDelete, isDragging }: TaskCardProps
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group bg-white border border-[--color-border] rounded-[--radius-md] p-3 cursor-pointer select-none touch-none',
-        'hover:border-[--color-border-strong] hover:shadow-[--shadow-sm] transition-all',
+        'group bg-white border border-[#E5E7EB] rounded-[6px] p-3 cursor-pointer select-none touch-none',
+        'hover:border-[#D1D5DB] hover:shadow-xs transition-all',
         isSortDragging && 'opacity-50',
-        isDragging && 'shadow-[--shadow-md] border-[--color-accent]',
-        overdue && 'border-l-2 border-l-[--color-danger]'
+        isDragging && 'shadow-md border-[#4338CA]',
+        overdue && 'border-l-4 border-l-[#B91C1C]'
       )}
       onClick={() => onOpen(task)}
     >
@@ -110,19 +110,19 @@ function TaskCard({ task, members, onOpen, onDelete, isDragging }: TaskCardProps
         <div
           {...attributes}
           {...listeners}
-          className="mt-0.5 text-[--color-text-tertiary] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
+          className="mt-0.5 text-[#9CA3AF] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
           onClick={e => e.stopPropagation()}
           aria-label="Drag task"
         >
           <GripVertical size={14} />
         </div>
         <div className={cn('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0', priority.dot)} />
-        <span className="flex-1 text-sm font-medium text-[--color-text-primary] leading-snug break-words min-w-0">
+        <span className="flex-1 text-sm font-medium text-[#202124] leading-snug break-words min-w-0">
           {task.title}
         </span>
         <button
           onClick={e => { e.stopPropagation(); onDelete(task.id) }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-[--color-text-tertiary] hover:text-[--color-danger] ml-1 flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-[#9CA3AF] hover:text-[#B91C1C] ml-1 flex-shrink-0 p-0.5 rounded"
           aria-label="Delete task"
         >
           <Trash2 size={13} />
@@ -131,9 +131,9 @@ function TaskCard({ task, members, onOpen, onDelete, isDragging }: TaskCardProps
 
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2 ml-6">
+        <div className="flex flex-wrap gap-1 mb-2 ml-5">
           {task.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-[--color-surface] rounded text-[--color-text-tertiary]">
+            <span key={tag} className="text-[10px] font-medium px-1.5 py-0.5 bg-[#F1F1EE] rounded text-[#6B7280]">
               {tag}
             </span>
           ))}
@@ -141,11 +141,11 @@ function TaskCard({ task, members, onOpen, onDelete, isDragging }: TaskCardProps
       )}
 
       {/* Footer: due date, assignee */}
-      <div className="flex items-center justify-between gap-2 ml-6">
+      <div className="flex items-center justify-between gap-2 ml-5 pt-1">
         {task.due_date ? (
           <span className={cn(
-            'flex items-center gap-1 text-[11px]',
-            overdue ? 'text-[--color-danger]' : days !== null && days <= 2 ? 'text-[--color-warning]' : 'text-[--color-text-tertiary]'
+            'flex items-center gap-1 text-[11px] font-medium',
+            overdue ? 'text-[#B91C1C]' : days !== null && days <= 2 ? 'text-[#B45309]' : 'text-[#6B7280]'
           )}>
             <Clock size={11} />
             {overdue ? 'Overdue' : formatRelativeDate(task.due_date)}
@@ -159,7 +159,9 @@ function TaskCard({ task, members, onOpen, onDelete, isDragging }: TaskCardProps
   )
 }
 
-// ─── Column ────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────
+// Column
+// ──────────────────────────────────────────
 
 interface ColumnProps {
   column: typeof COLUMNS[0]
@@ -172,18 +174,18 @@ interface ColumnProps {
 
 function Column({ column, tasks, members, onAddTask, onOpenTask, onDeleteTask }: ColumnProps) {
   return (
-    <div className="flex flex-col w-72 flex-shrink-0 bg-[--color-surface] rounded-[--radius-lg] border border-[--color-border]">
+    <div className="flex flex-col w-72 flex-shrink-0 bg-[#F1F1EE] rounded-[8px] border border-[#E5E7EB] shadow-xs">
       {/* Column header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[--color-border]">
+      <div className="flex items-center justify-between px-3.5 py-3 border-b border-[#E5E7EB] bg-white rounded-t-[8px]">
         <div className="flex items-center gap-2">
-          <span className={cn('text-sm font-semibold', column.color)}>{column.label}</span>
-          <span className="text-xs text-[--color-text-tertiary] bg-white border border-[--color-border] rounded-full px-1.5 min-w-5 text-center">
+          <span className={cn('text-xs font-bold uppercase tracking-wider', column.color)}>{column.label}</span>
+          <span className="text-[11px] font-semibold text-[#6B7280] bg-[#F1F1EE] border border-[#E5E7EB] rounded-full px-2 py-0.2 min-w-5 text-center">
             {tasks.length}
           </span>
         </div>
         <button
           onClick={() => onAddTask(column.id)}
-          className="text-[--color-text-tertiary] hover:text-[--color-accent] transition-colors"
+          className="text-[#9CA3AF] hover:text-[#4338CA] transition-colors p-1 rounded hover:bg-[#F7F7F5]"
           aria-label={`Add task to ${column.label}`}
         >
           <Plus size={15} />
@@ -192,15 +194,15 @@ function Column({ column, tasks, members, onAddTask, onOpenTask, onDeleteTask }:
 
       {/* Droppable area */}
       <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[120px] max-h-[calc(100vh-220px)]">
+        <div className="flex-1 overflow-y-auto p-2.5 space-y-2 min-h-[140px] max-h-[calc(100vh-230px)]">
           {tasks.length === 0 ? (
-            <div className="py-6 text-center">
-              <p className="text-xs text-[--color-text-tertiary]">No tasks</p>
+            <div className="py-8 text-center">
+              <p className="text-xs text-[#9CA3AF]">No tasks</p>
               <button
                 onClick={() => onAddTask(column.id)}
-                className="mt-1 text-xs text-[--color-accent] hover:underline"
+                className="mt-1 text-xs text-[#4338CA] hover:underline font-medium"
               >
-                Add one
+                + Add a task
               </button>
             </div>
           ) : (
@@ -861,14 +863,14 @@ export default function KanbanPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <div className="px-6 py-4 bg-white border-b border-[--color-border] flex-shrink-0">
+      <div className="px-6 py-4 bg-white border-b border-[#E5E7EB] flex-shrink-0 shadow-xs">
         <div className="flex items-center justify-between gap-4 mb-3">
           <div>
-            <h1 className="text-lg font-semibold text-[--color-text-primary]">Kanban Board</h1>
-            <p className="text-sm text-[--color-text-tertiary]">
+            <h1 className="text-lg font-bold text-[#202124]">Kanban Board</h1>
+            <p className="text-xs text-[#6B7280] mt-0.5">
               {allTasks.length} tasks · {allTasks.filter(t => t.status === 'done').length} completed
               {overdueCount > 0 && (
-                <span className="ml-2 text-[--color-danger]">· {overdueCount} overdue</span>
+                <span className="ml-2 text-[#B91C1C] font-semibold">· {overdueCount} overdue</span>
               )}
             </p>
           </div>

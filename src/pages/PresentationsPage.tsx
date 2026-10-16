@@ -659,73 +659,73 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
 
   return (
     <div className={cn(
-      'border rounded-[--radius-xl] overflow-hidden bg-white transition-all',
-      isCurrentPhase ? 'border-[--color-accent] shadow-[--shadow-md]' : 'border-[--color-border]',
-      phase.status === 'completed' || phase.status === 'approved' ? 'opacity-80' : ''
+      'border rounded-[8px] overflow-hidden bg-white transition-all',
+      isCurrentPhase ? 'border-[#4338CA] shadow-sm ring-1 ring-[#4338CA]/20' : 'border-[#E5E7EB]',
+      phase.status === 'completed' || phase.status === 'approved' ? 'opacity-85' : ''
     )}>
       {/* Phase header */}
       <div
-        className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-[--color-surface] transition-colors"
+        className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-[#F7F7F5] transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         {/* Phase number */}
         <div className={cn(
           'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
           phase.status === 'completed' || phase.status === 'approved'
-            ? 'bg-[--color-success-muted] text-[--color-success]'
+            ? 'bg-[#DCFCE7] text-[#15803D]'
             : isCurrentPhase
-            ? 'bg-[--color-accent] text-white'
-            : 'bg-[--color-surface-raised] text-[--color-text-tertiary]'
+            ? 'bg-[#4338CA] text-white shadow-xs'
+            : 'bg-[#F1F1EE] text-[#6B7280]'
         )}>
           {phase.status === 'completed' ? <Check size={14} /> : phase.phase_number}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-[--color-text-primary]">{phase.name}</span>
+            <span className="text-sm font-semibold text-[#202124]">{phase.name}</span>
             {isCurrentPhase && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-[--color-accent] text-white rounded font-medium">Current</span>
+              <span className="text-[10px] px-2 py-0.5 bg-[#EEF2FF] text-[#4338CA] border border-[#E0E7FF] rounded font-semibold">Current Phase</span>
             )}
             <PhaseStatusBadge status={phase.status} />
           </div>
-          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
             {phase.scheduled_date && (
               <span className={cn(
-                'text-xs flex items-center gap-1',
-                isSoon && !isPast ? 'text-[--color-warning]' : isPast ? 'text-[--color-text-tertiary]' : 'text-[--color-text-tertiary]'
+                'text-xs flex items-center gap-1 font-medium',
+                isSoon && !isPast ? 'text-[#B45309]' : 'text-[#6B7280]'
               )}>
-                <Calendar size={11} />
+                <Calendar size={12} className="text-[#9CA3AF]" />
                 {formatDate(phase.scheduled_date)}
                 {!isPast && days !== null && ` · ${days}d away`}
               </span>
             )}
             {totalDeliverables > 0 && (
-              <span className="text-xs text-[--color-text-tertiary]">
+              <span className="text-xs text-[#6B7280]">
                 {completedDeliverables}/{totalDeliverables} deliverables
               </span>
             )}
             {openCorrections > 0 && (
-              <span className="text-xs text-[--color-danger] flex items-center gap-1">
-                <AlertCircle size={11} /> {openCorrections} corrections open
+              <span className="text-xs text-[#B91C1C] flex items-center gap-1 font-medium">
+                <AlertCircle size={12} /> {openCorrections} corrections open
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {totalDeliverables > 0 && (
             <div className="w-20 hidden sm:block">
               <ProgressBar value={completionPct} variant={completionPct === 100 ? 'success' : 'default'} />
             </div>
           )}
-          {expanded ? <ChevronUp size={15} className="text-[--color-text-tertiary]" /> : <ChevronDown size={15} className="text-[--color-text-tertiary]" />}
+          {expanded ? <ChevronUp size={16} className="text-[#9CA3AF]" /> : <ChevronDown size={16} className="text-[#9CA3AF]" />}
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-[--color-border]">
+        <div className="border-t border-[#E5E7EB]">
           {/* Phase controls */}
-          <div className="flex items-center gap-3 px-4 py-2.5 bg-[--color-surface] border-b border-[--color-border] flex-wrap gap-y-2">
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-[#F7F7F5] border-b border-[#E5E7EB] flex-wrap gap-y-2">
             <div className="flex items-center gap-2">
               <label className="text-xs text-[--color-text-tertiary]">Status:</label>
               <select

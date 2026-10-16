@@ -145,12 +145,12 @@ function StepIndicator({ current }: { current: number }) {
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className={cn(
-                  'w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors',
+                  'w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all font-medium text-xs',
                   done
-                    ? 'bg-[--color-accent] border-[--color-accent] text-white'
+                    ? 'bg-[#4338CA] border-[#4338CA] text-white'
                     : active
-                    ? 'bg-white border-[--color-accent] text-[--color-accent]'
-                    : 'bg-white border-[--color-border] text-[--color-text-tertiary]'
+                    ? 'bg-white border-[#4338CA] text-[#4338CA] shadow-xs ring-2 ring-[#4338CA]/20'
+                    : 'bg-white border-[#D1D5DB] text-[#9CA3AF]'
                 )}
               >
                 {done ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
@@ -158,7 +158,7 @@ function StepIndicator({ current }: { current: number }) {
               <span
                 className={cn(
                   'text-xs font-medium hidden sm:block',
-                  active ? 'text-[--color-accent]' : done ? 'text-[--color-text-secondary]' : 'text-[--color-text-tertiary]'
+                  active ? 'text-[#4338CA] font-semibold' : done ? 'text-[#202124]' : 'text-[#9CA3AF]'
                 )}
               >
                 {step.label}
@@ -168,7 +168,7 @@ function StepIndicator({ current }: { current: number }) {
               <div
                 className={cn(
                   'flex-1 h-0.5 mx-2 mt-[-14px]',
-                  done ? 'bg-[--color-accent]' : 'bg-[--color-border]'
+                  done ? 'bg-[#4338CA]' : 'bg-[#E5E7EB]'
                 )}
               />
             )}
@@ -754,17 +754,19 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[--color-surface] flex flex-col">
+    <div className="min-h-screen bg-[#F7F7F5] flex flex-col">
       {/* Top bar */}
-      <header className="bg-white border-b border-[--color-border] px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <FolderGit2 className="w-5 h-5 text-[--color-accent]" />
-          <span className="text-sm font-semibold text-[--color-text-primary]">New Project</span>
+      <header className="bg-white border-b border-[#E5E7EB] px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-[#EEF2FF] flex items-center justify-center">
+            <FolderGit2 className="w-4 h-4 text-[#4338CA]" />
+          </div>
+          <span className="text-sm font-semibold text-[#202124]">New Project</span>
         </div>
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="text-sm text-[--color-text-secondary] hover:text-[--color-text-primary] transition-colors"
+          className="text-xs font-medium text-[#6B7280] hover:text-[#202124] transition-colors px-2 py-1 rounded hover:bg-[#F1F1EE]"
         >
           Cancel
         </button>
@@ -775,15 +777,15 @@ export default function NewProjectPage() {
         <div className="w-full max-w-2xl">
           <StepIndicator current={step} />
 
-          <div className="bg-white border border-[--color-border] rounded-[--radius-xl] shadow-[--shadow-sm] p-6 sm:p-8">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-xs p-6 sm:p-8">
             {step === 1 && <Step1 data={form} onChange={patch} />}
             {step === 2 && <Step2 data={form} onChange={patch} />}
             {step === 3 && <Step3 data={form} onChange={patch} />}
             {step === 4 && <Step4 data={form} />}
 
             {error && (
-              <div className="mt-4 px-3 py-2.5 bg-[--color-danger-light] border border-[--color-danger-muted] rounded-[--radius-md]">
-                <p className="text-sm text-[--color-danger]">{error}</p>
+              <div className="mt-4 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
 

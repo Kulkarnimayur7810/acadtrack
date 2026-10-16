@@ -102,18 +102,24 @@ function StatCard({ label, value, sub, icon, href, urgent }: StatCardProps) {
   return (
     <Card
       padding="md"
-      className={cn('cursor-pointer transition-all', urgent && 'border-[--color-danger]/40 bg-[--color-danger-light]/30')}
+      className={cn(
+        'cursor-pointer transition-all bg-white border border-[#E5E7EB] hover:border-[#D1D5DB] hover:shadow-xs',
+        urgent && 'border-[#FCA5A5] bg-[#FEF2F2]/30'
+      )}
       onClick={() => navigate(href)}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs text-[--color-text-tertiary] font-medium uppercase tracking-wide">{label}</p>
-          <p className={cn('text-2xl font-bold mt-1', urgent ? 'text-[--color-danger]' : 'text-[--color-text-primary]')}>
+          <p className="text-[11px] text-[#6B7280] font-semibold uppercase tracking-wider">{label}</p>
+          <p className={cn('text-2xl font-bold mt-1 tracking-tight', urgent ? 'text-[#B91C1C]' : 'text-[#202124]')}>
             {value}
           </p>
-          {sub && <p className="text-xs text-[--color-text-tertiary] mt-0.5">{sub}</p>}
+          {sub && <p className="text-xs text-[#6B7280] mt-0.5">{sub}</p>}
         </div>
-        <div className={cn('p-2 rounded-[--radius-md] flex-shrink-0', urgent ? 'bg-[--color-danger-light] text-[--color-danger]' : 'bg-[--color-surface-raised] text-[--color-text-tertiary]')}>
+        <div className={cn(
+          'p-2 rounded-[6px] flex-shrink-0',
+          urgent ? 'bg-[#FEE2E2] text-[#B91C1C]' : 'bg-[#EEF2FF] text-[#4338CA]'
+        )}>
           {icon}
         </div>
       </div>
@@ -139,23 +145,23 @@ function NextActionRow({ item }: { item: NextActionItem }) {
     : null
 
   const kindIcon =
-    item.kind === 'task' ? <ListChecks size={13} className="text-[--color-accent]" /> :
-    item.kind === 'deliverable' ? <BookOpen size={13} className="text-[--color-warning]" /> :
-    <MessageSquareWarning size={13} className="text-[--color-danger]" />
+    item.kind === 'task' ? <ListChecks size={13} className="text-[#4338CA]" /> :
+    item.kind === 'deliverable' ? <BookOpen size={13} className="text-[#B45309]" /> :
+    <MessageSquareWarning size={13} className="text-[#B91C1C]" />
 
   return (
-    <Link to={item.href} className="flex items-center gap-3 py-2.5 hover:bg-[--color-surface] px-2 -mx-2 rounded-[--radius-md] transition-colors group">
+    <Link to={item.href} className="flex items-center gap-3 py-2.5 hover:bg-[#F7F7F5] px-2 -mx-2 rounded-[6px] transition-colors group">
       <div className="flex-shrink-0 mt-0.5">{kindIcon}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[--color-text-primary] truncate group-hover:text-[--color-accent] transition-colors">
+        <p className="text-sm font-medium text-[#202124] truncate group-hover:text-[#4338CA] transition-colors">
           {item.title}
         </p>
         {item.assignee && (
-          <p className="text-xs text-[--color-text-tertiary] mt-0.5 truncate">{item.assignee}</p>
+          <p className="text-xs text-[#6B7280] mt-0.5 truncate">{item.assignee}</p>
         )}
       </div>
       {badge}
-      <ChevronRight size={14} className="text-[--color-text-tertiary] flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <ChevronRight size={14} className="text-[#9CA3AF] flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
     </Link>
   )
 }
@@ -457,8 +463,8 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {/* Left: meta */}
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-xl font-bold text-[--color-text-primary] truncate">{project.title}</h1>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <h1 className="text-xl font-bold text-[#202124] tracking-tight truncate">{project.title}</h1>
               <Badge variant={projectStatusVariant(project.status)}>
                 {projectStatusLabel(project.status)}
               </Badge>
@@ -475,20 +481,20 @@ export default function DashboardPage() {
             </div>
 
             {project.description && (
-              <p className="text-sm text-[--color-text-secondary] line-clamp-2 mb-3">{project.description}</p>
+              <p className="text-sm text-[#6B7280] line-clamp-2 mb-3 leading-relaxed">{project.description}</p>
             )}
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[--color-text-tertiary]">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6B7280]">
               {project.college && (
                 <span className="flex items-center gap-1">
-                  <BookOpen size={11} /> {project.college}
+                  <BookOpen size={12} className="text-[#9CA3AF]" /> {project.college}
                 </span>
               )}
               {project.department && <span>{project.department}</span>}
               {project.semester && <span>Sem {project.semester}</span>}
               {project.faculty_guide_name && (
                 <span className="flex items-center gap-1">
-                  <span className="font-medium text-[--color-text-secondary]">Guide:</span> {project.faculty_guide_name}
+                  <span className="font-medium text-[#202124]">Guide:</span> {project.faculty_guide_name}
                 </span>
               )}
             </div>
@@ -498,26 +504,26 @@ export default function DashboardPage() {
           {project.submission_deadline && (
             <div
               className={cn(
-                'flex-shrink-0 flex flex-col items-center justify-center rounded-[--radius-lg] border px-4 py-3 min-w-[110px] text-center',
+                'flex-shrink-0 flex flex-col items-center justify-center rounded-[8px] border px-4 py-3 min-w-[110px] text-center shadow-xs',
                 submissionDaysLeft !== null && submissionDaysLeft < 0
-                  ? 'border-[--color-danger]/40 bg-[--color-danger-light] text-[--color-danger]'
+                  ? 'border-[#FCA5A5] bg-[#FEF2F2] text-[#B91C1C]'
                   : submissionDaysLeft !== null && submissionDaysLeft <= 7
-                  ? 'border-[--color-warning]/40 bg-[--color-warning-light] text-[--color-warning]'
-                  : 'border-[--color-border] bg-[--color-surface] text-[--color-text-secondary]',
+                  ? 'border-[#FCD34D] bg-[#FFFBEB] text-[#B45309]'
+                  : 'border-[#E5E7EB] bg-[#F7F7F5] text-[#202124]',
               )}
             >
-              <CalendarDays size={16} className="mb-1" />
-              <span className="text-2xl font-bold leading-tight">
+              <CalendarDays size={16} className="mb-1 text-[#6B7280]" />
+              <span className="text-2xl font-bold leading-tight tracking-tight">
                 {submissionDaysLeft !== null
                   ? submissionDaysLeft < 0
                     ? Math.abs(submissionDaysLeft)
                     : submissionDaysLeft
                   : '—'}
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-wide">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6B7280]">
                 {submissionDaysLeft !== null && submissionDaysLeft < 0 ? 'days overdue' : 'days left'}
               </span>
-              <span className="text-[10px] text-[--color-text-tertiary] mt-0.5">
+              <span className="text-[10px] text-[#9CA3AF] mt-0.5">
                 {formatDate(project.submission_deadline, 'MMM d')}
               </span>
             </div>

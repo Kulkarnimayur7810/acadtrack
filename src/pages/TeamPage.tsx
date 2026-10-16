@@ -322,7 +322,7 @@ export default function TeamPage() {
             return (
               <div
                 key={member.id}
-                className="bg-white border border-[--color-border] rounded-[--radius-xl] p-5 shadow-xs flex flex-col justify-between hover:border-[--color-border-strong] transition-all"
+                className="bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-xs flex flex-col justify-between hover:border-[#D1D5DB] transition-all"
               >
                 <div>
                   {/* Top info row */}
@@ -330,7 +330,7 @@ export default function TeamPage() {
                     <div className="flex items-center gap-3">
                       <Avatar name={displayName} size="md" />
                       <div>
-                        <h2 className="text-sm font-bold text-[--color-text-primary]">
+                        <h2 className="text-sm font-bold text-[#202124]">
                           {displayName}
                         </h2>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -343,7 +343,7 @@ export default function TeamPage() {
                                   role: e.target.value as Member['role'],
                                 })
                               }
-                              className="text-xs border border-[--color-border] rounded px-1.5 py-0.5 bg-white font-medium text-[--color-text-secondary]"
+                              className="text-xs border border-[#E5E7EB] rounded px-2 py-0.5 bg-white font-medium text-[#4B5563]"
                               aria-label={`Change role for ${displayName}`}
                             >
                               <option value="leader">Team Leader</option>
@@ -375,53 +375,53 @@ export default function TeamPage() {
                       variant="ghost"
                       size="xs"
                       onClick={() => setSelectedMember(member)}
-                      className="text-[--color-accent] text-xs font-medium"
+                      className="text-[#4338CA] hover:bg-[#EEF2FF] text-xs font-medium"
                     >
                       View Tasks <ChevronRight className="w-3 h-3 ml-0.5" />
                     </Button>
                   </div>
 
                   {/* Metrics Row */}
-                  <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-[--color-border] text-center">
-                    <div className="bg-[--color-surface] p-2 rounded-[--radius-md]">
-                      <div className="text-base font-bold text-[--color-text-primary]">
+                  <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-[#E5E7EB] text-center">
+                    <div className="bg-[#F7F7F5] border border-[#E5E7EB]/50 p-2.5 rounded-lg">
+                      <div className="text-base font-bold text-[#202124]">
                         {stat?.assignedTasks.length || 0}
                       </div>
-                      <div className="text-[10px] text-[--color-text-tertiary] uppercase font-semibold">
+                      <div className="text-[10px] text-[#6B7280] uppercase font-semibold">
                         Assigned
                       </div>
                     </div>
 
-                    <div className="bg-[--color-surface] p-2 rounded-[--radius-md]">
-                      <div className="text-base font-bold text-[--color-success]">
+                    <div className="bg-[#F7F7F5] border border-[#E5E7EB]/50 p-2.5 rounded-lg">
+                      <div className="text-base font-bold text-green-700">
                         {stat?.completedTasks || 0}
                       </div>
-                      <div className="text-[10px] text-[--color-text-tertiary] uppercase font-semibold">
+                      <div className="text-[10px] text-[#6B7280] uppercase font-semibold">
                         Done
                       </div>
                     </div>
 
-                    <div className="bg-[--color-surface] p-2 rounded-[--radius-md]">
-                      <div className="text-base font-bold text-[--color-warning]">
+                    <div className="bg-[#F7F7F5] border border-[#E5E7EB]/50 p-2.5 rounded-lg">
+                      <div className="text-base font-bold text-amber-700">
                         {stat?.inProgressTasks || 0}
                       </div>
-                      <div className="text-[10px] text-[--color-text-tertiary] uppercase font-semibold">
+                      <div className="text-[10px] text-[#6B7280] uppercase font-semibold">
                         In Progress
                       </div>
                     </div>
 
-                    <div className="bg-[--color-surface] p-2 rounded-[--radius-md]">
+                    <div className="bg-[#F7F7F5] border border-[#E5E7EB]/50 p-2.5 rounded-lg">
                       <div
                         className={cn(
                           'text-base font-bold',
                           (stat?.overdueTasks || 0) > 0
-                            ? 'text-[--color-danger]'
-                            : 'text-[--color-text-secondary]'
+                            ? 'text-red-600'
+                            : 'text-[#6B7280]'
                         )}
                       >
                         {stat?.overdueTasks || 0}
                       </div>
-                      <div className="text-[10px] text-[--color-text-tertiary] uppercase font-semibold">
+                      <div className="text-[10px] text-[#6B7280] uppercase font-semibold">
                         Overdue
                       </div>
                     </div>
