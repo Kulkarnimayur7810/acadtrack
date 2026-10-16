@@ -11,7 +11,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
   Button, Input, Select, Badge, Avatar, Modal, Spinner, EmptyState,
   Card, Textarea, Checkbox, Tabs
@@ -268,27 +268,49 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
     enabled: !!task?.id,
   })
 
+  const [titleError, setTitleError] = useState<string | null>(null)
+
   useEffect(() => {
-    if (task) setForm(task)
+    if (task) {
+      setForm(task)
+      setTitleError(null)
+    }
   }, [task])
 
   const handleSave = async () => {
     if (!task) return
+    if (!form.title?.trim()) {
+      setTitleError('Task title cannot be empty.')
+      return
+    }
+    setTitleError(null)
     setSaving(true)
-    await onSave(form)
-    setSaving(false)
+    try {
+      await onSave(form)
+      toast('Task updated successfully', 'success')
+      onClose()
+    } catch (err: any) {
+      toast(err?.message || 'Failed to update task', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const addComment = async () => {
     if (!newComment.trim() || !task || !user) return
-    await supabase.from('comments').insert({
-      project_id: projectId,
-      task_id: task.id,
-      author_id: user.id,
-      content: newComment.trim(),
-    })
-    setNewComment('')
-    qc.invalidateQueries({ queryKey: ['task-comments', task.id] })
+    try {
+      await supabase.from('comments').insert({
+        project_id: projectId,
+        task_id: task.id,
+        author_id: user.id,
+        content: newComment.trim(),
+      })
+      setNewComment('')
+      toast('Comment posted', 'info')
+      qc.invalidateQueries({ queryKey: ['task-comments', task.id] })
+    } catch (err: any) {
+      toast(err?.message || 'Failed to post comment', 'error')
+    }
   }
 
   const toggleSubtask = async (id: string, completed: boolean) => {
@@ -303,6 +325,7 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
       title: title.trim(),
       order_index: (subtasks?.length || 0),
     })
+    toast('Subtask added', 'success')
     refetchSubtasks()
   }
 
@@ -323,9 +346,15 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
     >
       <div className="space-y-4">
         <Input
-          label="Title"
+          label="Title *"
           value={form.title || ''}
-          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+          error={titleError || undefined}
+          onChange={e => {
+            setTitleError(null)
+            setForm(f => ({ ...f, title: e.target.value }))
+          }}
+          placeholder="Task title..."
+          required
         />
         <Textarea
           label="Description"
@@ -487,17 +516,29 @@ function CreateTaskModal({ open, onClose, defaultStatus, projectId, members, onC
   const [form, setForm] = useState<Partial<Task>>({ status: defaultStatus, priority: 'medium' })
   const [loading, setLoading] = useState(false)
   const [tagInput, setTagInput] = useState('')
+  const [titleError, setTitleError] = useState<string | null>(null)
 
   useEffect(() => {
     setForm({ status: defaultStatus, priority: 'medium' })
+    setTitleError(null)
   }, [defaultStatus, open])
 
   const handleCreate = async () => {
-    if (!form.title?.trim()) return
+    if (!form.title?.trim()) {
+      setTitleError('Task title is required. Please specify what needs to be done.')
+      return
+    }
+    setTitleError(null)
     setLoading(true)
-    await onCreate(form)
-    setLoading(false)
-    onClose()
+    try {
+      await onCreate(form)
+      toast('Task created successfully', 'success')
+      onClose()
+    } catch (err: any) {
+      toast(err?.message || 'Failed to create task', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const addTag = (tag: string) => {
@@ -527,9 +568,14 @@ function CreateTaskModal({ open, onClose, defaultStatus, projectId, members, onC
         <Input
           label="Title *"
           value={form.title || ''}
-          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-          placeholder="Task title..."
+          error={titleError || undefined}
+          onChange={e => {
+            setTitleError(null)
+            setForm(f => ({ ...f, title: e.target.value }))
+          }}
+          placeholder="e.g. Implement user authentication middleware"
           autoFocus
+          required
         />
         <Textarea
           label="Description"
@@ -741,7 +787,13 @@ export default function KanbanPage() {
       const { error } = await supabase.from('tasks').delete().eq('id', taskId)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] })
+      toast('Task deleted successfully', 'info')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to delete task', 'error')
+    },
   })
 
   const handleDragStart = (event: DragStartEvent) => {

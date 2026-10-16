@@ -29,7 +29,7 @@ import {
   Grid
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
   Button,
   Input,
@@ -129,6 +129,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [titleError, setTitleError] = useState<string | null>(null)
 
   // Form State
   const [eventForm, setEventForm] = useState<Partial<CalendarEvent>>({
@@ -211,12 +212,17 @@ export default function CalendarPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar_events', currentProject?.id] })
       setIsAddModalOpen(false)
+      setTitleError(null)
       setEventForm({
         event_type: 'presentation',
         date: format(new Date(), 'yyyy-MM-dd'),
         time: '10:00',
         responsible_members: [],
       })
+      toast('Event scheduled successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to schedule event', 'error')
     },
   })
 
@@ -228,6 +234,10 @@ export default function CalendarPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar_events', currentProject?.id] })
       setSelectedEvent(null)
+      toast('Event deleted', 'info')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to delete event', 'error')
     },
   })
 
@@ -777,12 +787,21 @@ export default function CalendarPage() {
       {/* Add Event Modal */}
       <Modal
         open={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setTitleError(null)
+          setIsAddModalOpen(false)
+        }}
         title="Schedule Project Event"
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setTitleError(null)
+                setIsAddModalOpen(false)
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -790,9 +809,10 @@ export default function CalendarPage() {
               loading={createEventMutation.isPending}
               onClick={() => {
                 if (!eventForm.title?.trim()) {
-                  alert('Please enter an event title.')
+                  setTitleError('Event title is required.')
                   return
                 }
+                setTitleError(null)
                 createEventMutation.mutate(eventForm)
               }}
             >
@@ -805,7 +825,11 @@ export default function CalendarPage() {
           <Input
             label="Event Title *"
             value={eventForm.title || ''}
-            onChange={(e) => setEventForm((f) => ({ ...f, title: e.target.value }))}
+            error={titleError || undefined}
+            onChange={(e) => {
+              setTitleError(null)
+              setEventForm((f) => ({ ...f, title: e.target.value }))
+            }}
             placeholder="e.g. Mid-Term Viva Presentation"
             required
           />

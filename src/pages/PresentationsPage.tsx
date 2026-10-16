@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
   Button, Badge, Card, Modal, Input, Textarea, Select,
   Spinner, EmptyState, ProgressBar, Avatar, Tabs, SectionHeader, Checkbox
@@ -313,6 +313,7 @@ function FeedbackRecord({ feedback, corrections, members, projectId, phaseId, on
   const [expanded, setExpanded] = useState(false)
   const [showAddCorrection, setShowAddCorrection] = useState(false)
   const [correctionForm, setCorrectionForm] = useState<Partial<Correction>>({ priority: 'medium' })
+  const [descriptionError, setDescriptionError] = useState<string | null>(null)
 
   const feedbackCorrections = corrections.filter(c => c.feedback_id === feedback.id)
   const openCount = feedbackCorrections.filter(c => c.status === 'open' || c.status === 'reopened').length
@@ -379,7 +380,14 @@ function FeedbackRecord({ feedback, corrections, members, projectId, phaseId, on
               <p className="text-xs font-semibold text-[--color-text-secondary] uppercase tracking-wide">
                 Corrections ({feedbackCorrections.length})
               </p>
-              <Button variant="ghost" size="xs" onClick={() => setShowAddCorrection(!showAddCorrection)}>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setDescriptionError(null)
+                  setShowAddCorrection(!showAddCorrection)
+                }}
+              >
                 <Plus size={12} /> Add Correction
               </Button>
             </div>
@@ -389,8 +397,13 @@ function FeedbackRecord({ feedback, corrections, members, projectId, phaseId, on
                 <Textarea
                   label="Description *"
                   value={correctionForm.description || ''}
-                  onChange={e => setCorrectionForm(f => ({ ...f, description: e.target.value }))}
+                  error={descriptionError || undefined}
+                  onChange={e => {
+                    setDescriptionError(null)
+                    setCorrectionForm(f => ({ ...f, description: e.target.value }))
+                  }}
                   placeholder="What needs to be corrected?"
+                  required
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <Select
@@ -423,18 +436,23 @@ function FeedbackRecord({ feedback, corrections, members, projectId, phaseId, on
                     variant="primary"
                     size="sm"
                     onClick={() => {
-                      if (!correctionForm.description?.trim()) return
+                      if (!correctionForm.description?.trim()) {
+                        setDescriptionError('Please describe the required correction.')
+                        return
+                      }
+                      setDescriptionError(null)
                       onAddCorrection({
                         feedback_id: feedback.id,
                         phase_id: phaseId,
                         project_id: projectId,
                         ...correctionForm,
                       })
+                      toast('Correction added successfully', 'success')
                       setCorrectionForm({ priority: 'medium' })
                       setShowAddCorrection(false)
                     }}
                   >
-                    Add
+                    Add Correction
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setShowAddCorrection(false)}>Cancel</Button>
                 </div>
@@ -475,6 +493,8 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
   const [showAddFeedback, setShowAddFeedback] = useState(false)
   const [deliverableForm, setDeliverableForm] = useState<Partial<Deliverable>>({ is_mandatory: false })
   const [feedbackForm, setFeedbackForm] = useState<Partial<Feedback>>({})
+  const [deliverableNameError, setDeliverableNameError] = useState<string | null>(null)
+  const [reviewerError, setReviewerError] = useState<string | null>(null)
 
   const { data: deliverables = [] } = useDeliverables(phase.id)
   const { data: feedbackList = [] } = useFeedback(phase.id)
@@ -509,7 +529,10 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
         .eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['deliverables', phase.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deliverables', phase.id] })
+      toast('Deliverable updated', 'info')
+    },
   })
 
   const deleteDeliverable = useMutation({
@@ -517,7 +540,10 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
       const { error } = await supabase.from('deliverables').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['deliverables', phase.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deliverables', phase.id] })
+      toast('Deliverable removed', 'info')
+    },
   })
 
   const addDeliverable = useMutation({
@@ -540,6 +566,10 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
       qc.invalidateQueries({ queryKey: ['deliverables', phase.id] })
       setDeliverableForm({ is_mandatory: false })
       setShowAddDeliverable(false)
+      toast('Deliverable added successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to add deliverable', 'error')
     },
   })
 
@@ -564,6 +594,10 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
       qc.invalidateQueries({ queryKey: ['feedback', phase.id] })
       setFeedbackForm({})
       setShowAddFeedback(false)
+      toast('Faculty feedback saved successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to save feedback', 'error')
     },
   })
 
@@ -699,10 +733,11 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
                 onChange={e => {
                   const newStatus = e.target.value as Phase['status']
                   if (newStatus === 'ready_to_present' && !canMarkReadyToPresent) {
-                    alert(`Cannot mark as Ready to Present: ${mandatoryIncomplete} mandatory deliverable(s) are not approved.`)
+                    toast(`Cannot mark as Ready to Present: ${mandatoryIncomplete} mandatory deliverable(s) are not approved yet.`, 'warning', 'Prerequisites Incomplete')
                     return
                   }
                   updatePhase.mutate({ status: newStatus })
+                  toast(`Phase status updated to ${newStatus.replace(/_/g, ' ')}`, 'info')
                 }}
                 className="text-xs border border-[--color-border] rounded px-2 py-1 bg-white"
               >
@@ -763,13 +798,19 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
                     <Input
                       label="Deliverable Name *"
                       value={deliverableForm.name || ''}
-                      onChange={e => setDeliverableForm(f => ({ ...f, name: e.target.value }))}
+                      error={deliverableNameError || undefined}
+                      onChange={e => {
+                        setDeliverableNameError(null)
+                        setDeliverableForm(f => ({ ...f, name: e.target.value }))
+                      }}
                       placeholder="e.g. Project Report Draft"
+                      required
                     />
                     <Textarea
                       label="Description"
                       value={deliverableForm.description || ''}
                       onChange={e => setDeliverableForm(f => ({ ...f, description: e.target.value }))}
+                      placeholder="Deliverable specifications, acceptance requirements..."
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <Select
@@ -797,17 +838,37 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
                         size="sm"
                         loading={addDeliverable.isPending}
                         onClick={() => {
-                          if (!deliverableForm.name?.trim()) return
+                          if (!deliverableForm.name?.trim()) {
+                            setDeliverableNameError('Deliverable name is required.')
+                            return
+                          }
+                          setDeliverableNameError(null)
                           addDeliverable.mutate(deliverableForm)
                         }}
                       >
                         Add Deliverable
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setShowAddDeliverable(false)}>Cancel</Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setDeliverableNameError(null)
+                          setShowAddDeliverable(false)
+                        }}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 ) : (
-                  <Button variant="ghost" size="sm" onClick={() => setShowAddDeliverable(true)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDeliverableNameError(null)
+                      setShowAddDeliverable(true)
+                    }}
+                  >
                     <Plus size={14} /> Add Deliverable
                   </Button>
                 )}
@@ -835,12 +896,17 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
 
                 {showAddFeedback ? (
                   <div className="border border-[--color-border] rounded-[--radius-md] p-4 space-y-3 bg-[--color-surface]">
-                    <h4 className="text-sm font-semibold">Record Feedback</h4>
+                    <h4 className="text-sm font-semibold">Record Faculty Feedback</h4>
                     <Input
                       label="Reviewer Name *"
                       value={feedbackForm.reviewer_name || ''}
-                      onChange={e => setFeedbackForm(f => ({ ...f, reviewer_name: e.target.value }))}
-                      placeholder="Faculty guide name..."
+                      error={reviewerError || undefined}
+                      onChange={e => {
+                        setReviewerError(null)
+                        setFeedbackForm(f => ({ ...f, reviewer_name: e.target.value }))
+                      }}
+                      placeholder="e.g. Dr. Ramesh Kumar (Project Guide)"
+                      required
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <Input
@@ -854,12 +920,14 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
                       <Input
                         label="Marks Obtained"
                         type="number"
+                        placeholder="e.g. 18"
                         value={feedbackForm.marks_obtained ?? ''}
                         onChange={e => setFeedbackForm(f => ({ ...f, marks_obtained: e.target.value ? Number(e.target.value) : null }))}
                       />
                       <Input
                         label="Max Marks"
                         type="number"
+                        placeholder="e.g. 20"
                         value={feedbackForm.max_marks ?? ''}
                         onChange={e => setFeedbackForm(f => ({ ...f, max_marks: e.target.value ? Number(e.target.value) : null }))}
                       />
@@ -868,17 +936,20 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
                       label="General Feedback"
                       value={feedbackForm.general_feedback || ''}
                       onChange={e => setFeedbackForm(f => ({ ...f, general_feedback: e.target.value }))}
+                      placeholder="Summary of presentation review and overall remarks..."
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Textarea
                         label="Strengths"
                         value={feedbackForm.strengths || ''}
                         onChange={e => setFeedbackForm(f => ({ ...f, strengths: e.target.value }))}
+                        placeholder="What went well..."
                       />
                       <Textarea
                         label="Areas for Improvement"
                         value={feedbackForm.areas_for_improvement || ''}
                         onChange={e => setFeedbackForm(f => ({ ...f, areas_for_improvement: e.target.value }))}
+                        placeholder="Suggestions for refinement..."
                       />
                     </div>
                     <div className="flex gap-2">
@@ -887,17 +958,37 @@ function PhaseCard({ phase, members, projectId, isCurrentPhase }: PhaseCardProps
                         size="sm"
                         loading={addFeedback.isPending}
                         onClick={() => {
-                          if (!feedbackForm.reviewer_name?.trim()) return
+                          if (!feedbackForm.reviewer_name?.trim()) {
+                            setReviewerError('Reviewer name is required.')
+                            return
+                          }
+                          setReviewerError(null)
                           addFeedback.mutate(feedbackForm)
                         }}
                       >
                         Save Feedback
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setShowAddFeedback(false)}>Cancel</Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setReviewerError(null)
+                          setShowAddFeedback(false)
+                        }}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 ) : (
-                  <Button variant="ghost" size="sm" onClick={() => setShowAddFeedback(true)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setReviewerError(null)
+                      setShowAddFeedback(true)
+                    }}
+                  >
                     <Plus size={14} /> Record Feedback
                   </Button>
                 )}
@@ -935,6 +1026,7 @@ export default function PresentationsPage() {
   const qc = useQueryClient()
   const [showAddPhase, setShowAddPhase] = useState(false)
   const [phaseForm, setPhaseForm] = useState<Partial<Phase>>({})
+  const [phaseNameError, setPhaseNameError] = useState<string | null>(null)
 
   const { data: phases = [], isLoading } = usePhases(currentProject?.id)
   const { data: members = [] } = useMembers(currentProject?.id)
@@ -959,6 +1051,10 @@ export default function PresentationsPage() {
       qc.invalidateQueries({ queryKey: ['phases', currentProject?.id] })
       setPhaseForm({})
       setShowAddPhase(false)
+      toast('Presentation phase added successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to add presentation phase', 'error')
     },
   })
 
@@ -984,7 +1080,14 @@ export default function PresentationsPage() {
             {completedPhases}/{totalPhases} phases completed
           </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setShowAddPhase(true)}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => {
+            setPhaseNameError(null)
+            setShowAddPhase(true)
+          }}
+        >
           <Plus size={15} /> Add Phase
         </Button>
       </div>
@@ -1016,7 +1119,14 @@ export default function PresentationsPage() {
           title="No presentation phases"
           description="Add phases to track your project presentation lifecycle."
           action={
-            <Button variant="primary" size="sm" onClick={() => setShowAddPhase(true)}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setPhaseNameError(null)
+                setShowAddPhase(true)
+              }}
+            >
               <Plus size={14} /> Add First Phase
             </Button>
           }
@@ -1038,16 +1148,31 @@ export default function PresentationsPage() {
       {/* Add phase modal */}
       <Modal
         open={showAddPhase}
-        onClose={() => setShowAddPhase(false)}
+        onClose={() => {
+          setPhaseNameError(null)
+          setShowAddPhase(false)
+        }}
         title="Add Presentation Phase"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowAddPhase(false)}>Cancel</Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setPhaseNameError(null)
+                setShowAddPhase(false)
+              }}
+            >
+              Cancel
+            </Button>
             <Button
               variant="primary"
               loading={addPhase.isPending}
               onClick={() => {
-                if (!phaseForm.name?.trim()) return
+                if (!phaseForm.name?.trim()) {
+                  setPhaseNameError('Phase name is required.')
+                  return
+                }
+                setPhaseNameError(null)
                 addPhase.mutate(phaseForm)
               }}
             >
@@ -1060,13 +1185,19 @@ export default function PresentationsPage() {
           <Input
             label="Phase Name *"
             value={phaseForm.name || ''}
-            onChange={e => setPhaseForm(f => ({ ...f, name: e.target.value }))}
-            placeholder="e.g. Final Viva"
+            error={phaseNameError || undefined}
+            onChange={e => {
+              setPhaseNameError(null)
+              setPhaseForm(f => ({ ...f, name: e.target.value }))
+            }}
+            placeholder="e.g. Pre-Final Evaluation & Viva"
+            required
           />
           <Textarea
             label="Description"
             value={phaseForm.description || ''}
             onChange={e => setPhaseForm(f => ({ ...f, description: e.target.value }))}
+            placeholder="Scope, review agenda, and objectives for this phase..."
           />
           <Input
             label="Scheduled Date"

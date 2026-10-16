@@ -17,7 +17,7 @@ import {
   Info
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
   Button,
   Input,
@@ -59,6 +59,7 @@ export default function TeamPage() {
   const [newMemberEmail, setNewMemberEmail] = useState('')
   const [newMemberName, setNewMemberName] = useState('')
   const [newMemberRole, setNewMemberRole] = useState<Member['role']>('member')
+  const [memberError, setMemberError] = useState('')
 
   // Fetch project members
   const { data: members = [], isLoading: membersLoading } = useQuery({
@@ -157,6 +158,10 @@ export default function TeamPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project_members', currentProject?.id] })
+      toast('Member role updated successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to update member role', 'error')
     },
   })
 
@@ -180,6 +185,11 @@ export default function TeamPage() {
       setNewMemberEmail('')
       setNewMemberName('')
       setNewMemberRole('member')
+      setMemberError('')
+      toast('Project member added successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to add project member', 'error')
     },
   })
 
@@ -533,12 +543,21 @@ export default function TeamPage() {
       {/* Add Member Modal */}
       <Modal
         open={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setMemberError('')
+        }}
         title="Add Project Member"
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsAddModalOpen(false)
+                setMemberError('')
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -546,9 +565,10 @@ export default function TeamPage() {
               loading={addMemberMutation.isPending}
               onClick={() => {
                 if (!newMemberName.trim() && !newMemberEmail.trim()) {
-                  alert('Please enter a member name or email.')
+                  setMemberError('Please enter a member name or college email.')
                   return
                 }
+                setMemberError('')
                 addMemberMutation.mutate()
               }}
             >
@@ -562,7 +582,11 @@ export default function TeamPage() {
             label="Full Name *"
             placeholder="e.g. Rahul Sharma"
             value={newMemberName}
-            onChange={(e) => setNewMemberName(e.target.value)}
+            error={memberError}
+            onChange={(e) => {
+              setNewMemberName(e.target.value)
+              if (memberError) setMemberError('')
+            }}
             required
           />
 
@@ -571,7 +595,10 @@ export default function TeamPage() {
             type="email"
             placeholder="student@university.edu"
             value={newMemberEmail}
-            onChange={(e) => setNewMemberEmail(e.target.value)}
+            onChange={(e) => {
+              setNewMemberEmail(e.target.value)
+              if (memberError) setMemberError('')
+            }}
           />
 
           <Select

@@ -14,7 +14,7 @@ import {
   Check
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
   Button,
   Input,
@@ -40,6 +40,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient()
 
   const [form, setForm] = useState<Partial<Project>>({})
+  const [titleError, setTitleError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
@@ -103,6 +104,10 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
+      toast('Project settings saved successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to save project settings', 'error')
     },
   })
 
@@ -117,6 +122,10 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['presentation_phases', currentProject?.id] })
+      toast('Phase workflow state updated', 'success')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to update phase', 'error')
     },
   })
 
@@ -130,7 +139,11 @@ export default function SettingsPage() {
     onSuccess: () => {
       setCurrentProject(null)
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      toast('Project deleted successfully', 'info')
       navigate('/projects')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to delete project', 'error')
     },
   })
 
@@ -163,7 +176,15 @@ export default function SettingsPage() {
           variant="primary"
           size="sm"
           loading={updateProjectMutation.isPending}
-          onClick={() => updateProjectMutation.mutate(form)}
+          onClick={() => {
+            if (!form.title?.trim()) {
+              setTitleError('Project title is required')
+              toast('Project title cannot be empty', 'error')
+              return
+            }
+            setTitleError('')
+            updateProjectMutation.mutate(form)
+          }}
           className="flex items-center gap-1.5"
         >
           {saveSuccess ? <Check className="w-4 h-4 text-white" /> : <Save className="w-4 h-4" />}
@@ -181,7 +202,11 @@ export default function SettingsPage() {
         <Input
           label="Project Title *"
           value={form.title || ''}
-          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+          error={titleError}
+          onChange={(e) => {
+            setForm((f) => ({ ...f, title: e.target.value }))
+            if (titleError) setTitleError('')
+          }}
           required
         />
 

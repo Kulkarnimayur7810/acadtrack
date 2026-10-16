@@ -1,5 +1,7 @@
-import React, { forwardRef } from 'react'
+import React, { forwardRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from 'lucide-react'
+import { useUIStore, type ToastItem } from '@/lib/store'
 
 // ──────────────────────────────────────────
 // Button
@@ -292,41 +294,50 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
     full: 'max-w-[95vw]',
   }
 
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
+
   if (!open) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className={cn(
-        'relative w-full rounded-[--radius-xl] bg-white border border-[--color-border] shadow-[--shadow-lg] flex flex-col max-h-[90vh]',
-        sizes[size]
-      )}>
+      <div
+        className={cn(
+          'relative w-full rounded-[--radius-xl] bg-white border border-[--color-border] shadow-2xl flex flex-col max-h-[88vh] my-auto overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150',
+          sizes[size]
+        )}
+      >
         {title && (
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[--color-border] flex-shrink-0">
-            <h2 className="text-base font-semibold text-[--color-text-primary]">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[--color-border] shrink-0 bg-white">
+            <h2 className="text-base font-semibold text-[--color-text-primary] tracking-tight">{title}</h2>
             <button
               onClick={onClose}
               className="w-7 h-7 flex items-center justify-center rounded-[--radius-md] text-[--color-text-tertiary] hover:bg-[--color-surface] hover:text-[--color-text-primary] transition-colors"
-              aria-label="Close"
+              aria-label="Close dialog"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
+              <X size={16} />
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-5 overscroll-contain">{children}</div>
         {footer && (
-          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[--color-border] flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-[--color-border] shrink-0 bg-[--color-surface] rounded-b-[--radius-xl]">
             {footer}
           </div>
         )}
@@ -537,3 +548,54 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   }
 )
 Checkbox.displayName = 'Checkbox'
+
+// ──────────────────────────────────────────
+// Toast Container
+// ──────────────────────────────────────────
+export function ToastContainer() {
+  const { toasts, removeToast } = useUIStore()
+
+  if (toasts.length === 0) return null
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+      {toasts.map((t) => {
+        const icons = {
+          success: <CheckCircle2 size={16} className="text-[--color-success] shrink-0" />,
+          error: <AlertCircle size={16} className="text-[--color-danger] shrink-0" />,
+          warning: <AlertTriangle size={16} className="text-[--color-warning] shrink-0" />,
+          info: <Info size={16} className="text-[--color-accent] shrink-0" />,
+        }
+        const borders = {
+          success: 'border-l-4 border-l-[--color-success]',
+          error: 'border-l-4 border-l-[--color-danger]',
+          warning: 'border-l-4 border-l-[--color-warning]',
+          info: 'border-l-4 border-l-[--color-accent]',
+        }
+        return (
+          <div
+            key={t.id}
+            className={cn(
+              'pointer-events-auto flex items-start gap-3 p-3.5 bg-white border border-[--color-border] rounded-[--radius-lg] shadow-[--shadow-md] text-sm transition-all animate-in fade-in slide-in-from-bottom-2 duration-150',
+              borders[t.type || 'info']
+            )}
+            role="status"
+          >
+            {icons[t.type || 'info']}
+            <div className="flex-1 min-w-0">
+              {t.title && <p className="font-semibold text-xs text-[--color-text-primary] mb-0.5">{t.title}</p>}
+              <p className="text-xs text-[--color-text-secondary] leading-relaxed break-words">{t.message}</p>
+            </div>
+            <button
+              onClick={() => removeToast(t.id)}
+              className="text-[--color-text-tertiary] hover:text-[--color-text-primary] transition-colors p-0.5 rounded"
+              aria-label="Dismiss notification"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}

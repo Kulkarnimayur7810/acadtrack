@@ -12,7 +12,7 @@ import {
   ClipboardList,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useAuthStore, useProjectStore } from '@/lib/store'
+import { useAuthStore, useProjectStore, toast } from '@/lib/store'
 import {
   Button,
   Input,
@@ -743,7 +743,7 @@ export default function NewProjectPage() {
       const updatedProjects = [...projects, project]
       setProjects(updatedProjects)
       setCurrentProject(project)
-
+      toast('Project created successfully', 'success')
       navigate('/dashboard')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to create project. Please try again.'

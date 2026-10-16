@@ -15,7 +15,7 @@ import {
   Sliders
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
   Button,
   Input,
@@ -45,6 +45,7 @@ export default function MilestonesPage() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null)
+  const [titleError, setTitleError] = useState<string | null>(null)
   const [milestoneForm, setMilestoneForm] = useState<Partial<Milestone>>({
     weight: 10,
     status: 'not_started',
@@ -114,7 +115,12 @@ export default function MilestonesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['milestones', currentProject?.id] })
       setIsAddModalOpen(false)
+      setTitleError(null)
       setMilestoneForm({ weight: 10, status: 'not_started' })
+      toast('Milestone created successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to create milestone', 'error')
     },
   })
 
@@ -129,6 +135,11 @@ export default function MilestonesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['milestones', currentProject?.id] })
       setEditingMilestone(null)
+      setTitleError(null)
+      toast('Milestone updated successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to update milestone', 'error')
     },
   })
 
@@ -140,6 +151,10 @@ export default function MilestonesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['milestones', currentProject?.id] })
       setEditingMilestone(null)
+      toast('Milestone deleted', 'info')
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to delete milestone', 'error')
     },
   })
 
@@ -429,6 +444,7 @@ export default function MilestonesPage() {
       <Modal
         open={isAddModalOpen || !!editingMilestone}
         onClose={() => {
+          setTitleError(null)
           setIsAddModalOpen(false)
           setEditingMilestone(null)
         }}
@@ -451,6 +467,7 @@ export default function MilestonesPage() {
               <Button
                 variant="ghost"
                 onClick={() => {
+                  setTitleError(null)
                   setIsAddModalOpen(false)
                   setEditingMilestone(null)
                 }}
@@ -464,9 +481,10 @@ export default function MilestonesPage() {
                 }
                 onClick={() => {
                   if (!milestoneForm.title?.trim()) {
-                    alert('Please enter a milestone title.')
+                    setTitleError('Milestone title is required.')
                     return
                   }
+                  setTitleError(null)
                   if (editingMilestone) {
                     updateMilestoneMutation.mutate({
                       id: editingMilestone.id,
@@ -488,7 +506,11 @@ export default function MilestonesPage() {
             label="Milestone Title *"
             placeholder="e.g. System Architecture & UML Finalised"
             value={milestoneForm.title || ''}
-            onChange={(e) => setMilestoneForm((f) => ({ ...f, title: e.target.value }))}
+            error={titleError || undefined}
+            onChange={(e) => {
+              setTitleError(null)
+              setMilestoneForm((f) => ({ ...f, title: e.target.value }))
+            }}
             required
           />
 

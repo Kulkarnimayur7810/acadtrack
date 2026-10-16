@@ -15,8 +15,8 @@ import {
   Info,
   ChevronDown
 } from 'lucide-react'
+import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
-import { useProjectStore, useAuthStore } from '@/lib/store'
 import {
   Button,
   Input,
@@ -106,6 +106,7 @@ export default function ResearchPage() {
     status: 'identified',
     year: new Date().getFullYear(),
   })
+  const [paperTitleError, setPaperTitleError] = useState('')
 
   // Experiment Form
   const [experimentForm, setExperimentForm] = useState<Partial<ExperimentRecord>>({
@@ -113,6 +114,7 @@ export default function ResearchPage() {
     splits: '70% Train / 15% Val / 15% Test',
     verifiedByTeam: true,
   })
+  const [modelArchError, setModelArchError] = useState('')
 
   // Query: Research Papers from database
   const { data: papers = [], isLoading: papersLoading } = useQuery({
@@ -152,6 +154,11 @@ export default function ResearchPage() {
       queryClient.invalidateQueries({ queryKey: ['research_papers', currentProject?.id] })
       setIsPaperModalOpen(false)
       setPaperForm({ status: 'identified', year: new Date().getFullYear() })
+      setPaperTitleError('')
+      toast('Research paper added successfully', 'success')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to add research paper', 'error')
     },
   })
 
@@ -165,6 +172,10 @@ export default function ResearchPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['research_papers', currentProject?.id] })
+      toast('Paper status updated', 'success')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to update paper status', 'error')
     },
   })
 
@@ -175,6 +186,10 @@ export default function ResearchPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['research_papers', currentProject?.id] })
+      toast('Research paper removed', 'info')
+    },
+    onError: (err: any) => {
+      toast(err.message || 'Failed to delete paper', 'error')
     },
   })
 
@@ -219,9 +234,10 @@ export default function ResearchPage() {
 
   const addExperiment = () => {
     if (!experimentForm.modelArchitecture?.trim()) {
-      alert('Please enter a model architecture.')
+      setModelArchError('Model architecture is required (e.g. YOLOv8, ResNet50)')
       return
     }
+    setModelArchError('')
     const newExp: ExperimentRecord = {
       id: crypto.randomUUID(),
       date: experimentForm.date || new Date().toISOString().split('T')[0],
@@ -245,6 +261,7 @@ export default function ResearchPage() {
       splits: '70% Train / 15% Val / 15% Test',
       verifiedByTeam: true,
     })
+    toast('Experiment benchmark saved successfully', 'success')
   }
 
   if (!currentProject) {
@@ -603,12 +620,21 @@ export default function ResearchPage() {
       {/* Add Paper Modal */}
       <Modal
         open={isPaperModalOpen}
-        onClose={() => setIsPaperModalOpen(false)}
+        onClose={() => {
+          setIsPaperModalOpen(false)
+          setPaperTitleError('')
+        }}
         title="Add Research Paper"
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsPaperModalOpen(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsPaperModalOpen(false)
+                setPaperTitleError('')
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -616,9 +642,10 @@ export default function ResearchPage() {
               loading={createPaperMutation.isPending}
               onClick={() => {
                 if (!paperForm.title?.trim()) {
-                  alert('Please enter a paper title.')
+                  setPaperTitleError('Please enter a research paper title')
                   return
                 }
+                setPaperTitleError('')
                 createPaperMutation.mutate(paperForm)
               }}
             >
@@ -632,7 +659,11 @@ export default function ResearchPage() {
             label="Paper Title *"
             placeholder="e.g. Deep Residual Learning for Image Recognition"
             value={paperForm.title || ''}
-            onChange={(e) => setPaperForm((f) => ({ ...f, title: e.target.value }))}
+            error={paperTitleError}
+            onChange={(e) => {
+              setPaperForm((f) => ({ ...f, title: e.target.value }))
+              if (paperTitleError) setPaperTitleError('')
+            }}
             required
           />
 
@@ -707,12 +738,21 @@ export default function ResearchPage() {
       {/* Record Experiment Modal */}
       <Modal
         open={isExperimentModalOpen}
-        onClose={() => setIsExperimentModalOpen(false)}
+        onClose={() => {
+          setIsExperimentModalOpen(false)
+          setModelArchError('')
+        }}
         title="Record Model Experiment"
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsExperimentModalOpen(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsExperimentModalOpen(false)
+                setModelArchError('')
+              }}
+            >
               Cancel
             </Button>
             <Button variant="primary" onClick={addExperiment}>
@@ -727,9 +767,11 @@ export default function ResearchPage() {
               label="Model Architecture *"
               placeholder="e.g. YOLOv8s / ResNet50"
               value={experimentForm.modelArchitecture || ''}
-              onChange={(e) =>
+              error={modelArchError}
+              onChange={(e) => {
                 setExperimentForm((f) => ({ ...f, modelArchitecture: e.target.value }))
-              }
+                if (modelArchError) setModelArchError('')
+              }}
               required
             />
             <Input
