@@ -211,19 +211,22 @@ export function Badge({ children, variant = 'default', size = 'sm', className }:
 // ──────────────────────────────────────────
 // Avatar
 // ──────────────────────────────────────────
+import { getAvatarDataUrl } from '@/lib/avatars'
+
 interface AvatarProps {
   name?: string | null
-  size?: 'xs' | 'sm' | 'md' | 'lg'
+  src?: string | null
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
 const AVATAR_COLORS = [
-  'bg-blue-100 text-blue-700',
-  'bg-green-100 text-green-700',
-  'bg-amber-100 text-amber-700',
-  'bg-purple-100 text-purple-700',
-  'bg-pink-100 text-pink-700',
-  'bg-teal-100 text-teal-700',
+  'bg-[#EEF2FF] text-[#4338CA]',
+  'bg-[#ECFDF5] text-[#059669]',
+  'bg-[#FFFBEB] text-[#D97706]',
+  'bg-[#FAF5FF] text-[#7C3AED]',
+  'bg-[#FDF2F8] text-[#DB2777]',
+  'bg-[#F0FDFA] text-[#0D9488]',
 ]
 
 function getAvatarColor(name: string | null | undefined): string {
@@ -237,10 +240,31 @@ function getInitials(name: string | null | undefined): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
 }
 
-export function Avatar({ name, size = 'sm', className }: AvatarProps) {
-  const sizes = { xs: 'w-5 h-5 text-[10px]', sm: 'w-7 h-7 text-xs', md: 'w-9 h-9 text-sm', lg: 'w-11 h-11 text-base' }
+export function Avatar({ name, src, size = 'sm', className }: AvatarProps) {
+  const sizes = {
+    xs: 'w-5 h-5 text-[10px]',
+    sm: 'w-7 h-7 text-xs',
+    md: 'w-9 h-9 text-sm',
+    lg: 'w-11 h-11 text-base',
+    xl: 'w-16 h-16 text-xl',
+  }
+
+  const resolvedUrl = src ? getAvatarDataUrl(src) || src : null
+
+  if (resolvedUrl) {
+    return (
+      <div className={cn('rounded-full overflow-hidden flex-shrink-0 border border-[#E5E7EB] bg-white', sizes[size], className)}>
+        <img
+          src={resolvedUrl}
+          alt={name || 'Avatar'}
+          className="w-full h-full object-cover rounded-full"
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className={cn('rounded-full flex items-center justify-center font-medium flex-shrink-0', sizes[size], getAvatarColor(name), className)}>
+    <div className={cn('rounded-full flex items-center justify-center font-semibold flex-shrink-0 select-none border border-black/5', sizes[size], getAvatarColor(name), className)}>
       {getInitials(name)}
     </div>
   )

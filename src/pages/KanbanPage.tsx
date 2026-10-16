@@ -1,43 +1,102 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import {
-  DndContext, DragOverlay, closestCorners, PointerSensor, TouchSensor,
-  KeyboardSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent,
-  type DragOverEvent
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core'
 import {
-  SortableContext, sortableKeyboardCoordinates, useSortable,
-  verticalListSortingStrategy, arrayMove
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useProjectStore, useAuthStore, toast } from '@/lib/store'
 import {
-  Button, Input, Select, Badge, Avatar, Modal, Spinner, EmptyState,
-  Card, Textarea, Checkbox, Tabs
+  Button,
+  Input,
+  Select,
+  Badge,
+  Avatar,
+  Modal,
+  Spinner,
+  EmptyState,
+  Card,
+  Textarea,
+  Checkbox,
+  Tabs,
 } from '@/components/ui'
 import {
-  cn, formatDate, isOverdue, PRIORITY_CONFIG, STATUS_CONFIG,
-  daysUntil, formatRelativeDate
+  cn,
+  formatDate,
+  isOverdue,
+  PRIORITY_CONFIG,
+  daysUntil,
+  formatRelativeDate,
 } from '@/lib/utils'
 import {
-  Plus, Search, Filter, X, AlertCircle, Clock, Calendar,
-  User, Tag, ChevronDown, GripVertical, Pencil, Trash2,
-  MessageSquare, Paperclip, CheckSquare, MoreHorizontal, Flag
+  Plus,
+  Search,
+  Filter,
+  X,
+  AlertCircle,
+  Clock,
+  Calendar,
+  User,
+  Tag,
+  ChevronDown,
+  GripVertical,
+  Pencil,
+  Trash2,
+  MessageSquare,
+  Paperclip,
+  CheckSquare,
+  MoreHorizontal,
+  Flag,
+  ArrowUpDown,
+  Sparkles,
+  Layers,
 } from 'lucide-react'
 import type { Database } from '@/lib/database.types'
 
 type Task = Database['public']['Tables']['tasks']['Row']
-type Member = Database['public']['Tables']['project_members']['Row'] & { profile?: Database['public']['Tables']['profiles']['Row'] }
+type Member = Database['public']['Tables']['project_members']['Row'] & {
+  profile?: Database['public']['Tables']['profiles']['Row']
+}
 
-const COLUMNS: { id: Task['status']; label: string; color: string }[] = [
-  { id: 'backlog', label: 'Backlog', color: 'text-[#6B7280]' },
-  { id: 'todo', label: 'To Do', color: 'text-[#4338CA]' },
-  { id: 'in_progress', label: 'In Progress', color: 'text-[#B45309]' },
-  { id: 'in_review', label: 'In Review', color: 'text-[#6D28D9]' },
-  { id: 'blocked', label: 'Blocked', color: 'text-[#B91C1C]' },
-  { id: 'done', label: 'Done', color: 'text-[#15803D]' },
+// ─── Exactly FOUR Workflow Statuses ──────────────────────────────────────────
+export type KanbanStatus = 'todo' | 'in_progress' | 'in_review' | 'done'
+
+const COLUMNS: {
+  id: KanbanStatus
+  label: string
+  color: string
+  badgeBg: string
+  dotColor: string
+}[] = [
+  { id: 'todo', label: 'To Do', color: 'text-[#4338CA]', badgeBg: 'bg-[#EEF2FF]', dotColor: 'bg-[#4338CA]' },
+  { id: 'in_progress', label: 'In Progress', color: 'text-[#B45309]', badgeBg: 'bg-[#FEF3C7]', dotColor: 'bg-[#F59E0B]' },
+  { id: 'in_review', label: 'In Review', color: 'text-[#6D28D9]', badgeBg: 'bg-[#EDE9FE]', dotColor: 'bg-[#8B5CF6]' },
+  { id: 'done', label: 'Done', color: 'text-[#15803D]', badgeBg: 'bg-[#DCFCE7]', dotColor: 'bg-[#22C55E]' },
 ]
+
+// Safe normalization for legacy statuses without deleting data
+function normalizeStatus(status: Task['status']): KanbanStatus {
+  if (status === 'backlog') return 'todo'
+  if (status === 'blocked') return 'in_progress'
+  return status as KanbanStatus
+}
 
 // ─── Data hooks ────────────────────────────────────────────────────────────────
 
@@ -85,139 +144,197 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task, members, onOpen, onDelete, isDragging }: TaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortDragging } = useSortable({ id: task.id })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging: isSortDragging,
+  } = useSortable({ id: task.id })
+
   const style = { transform: CSS.Transform.toString(transform), transition }
   const overdue = isOverdue(task.due_date) && task.status !== 'done'
-  const assignee = members.find(m => m.user_id === task.assignee_id)
-  const days = daysUntil(task.due_date)
-  const priority = PRIORITY_CONFIG[task.priority]
+  const assignee = members.find((m) => m.user_id === task.assignee_id)
+  const priority = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group bg-white border border-[#E5E7EB] rounded-[6px] p-3 cursor-pointer select-none touch-none',
-        'hover:border-[#D1D5DB] hover:shadow-xs transition-all',
-        isSortDragging && 'opacity-50',
-        isDragging && 'shadow-md border-[#4338CA]',
-        overdue && 'border-l-4 border-l-[#B91C1C]'
+        'group bg-white border border-[#E5E7EB] rounded-lg p-3.5 cursor-pointer select-none touch-none',
+        'hover:border-[#D1D5DB] hover:shadow-sm transition-all relative',
+        isSortDragging && 'opacity-40',
+        isDragging && 'shadow-lg border-[#4338CA] rotate-1 scale-[1.02]',
+        overdue && 'border-l-4 border-l-red-500'
       )}
       onClick={() => onOpen(task)}
     >
-      {/* Priority dot + drag handle */}
-      <div className="flex items-start gap-2 mb-2">
+      {/* Priority dot + drag handle + title */}
+      <div className="flex items-start gap-2 mb-1.5">
         <div
           {...attributes}
           {...listeners}
-          className="mt-0.5 text-[#9CA3AF] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
-          onClick={e => e.stopPropagation()}
+          className="mt-0.5 text-[#9CA3AF] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
+          onClick={(e) => e.stopPropagation()}
           aria-label="Drag task"
         >
           <GripVertical size={14} />
         </div>
-        <div className={cn('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0', priority.dot)} />
-        <span className="flex-1 text-sm font-medium text-[#202124] leading-snug break-words min-w-0">
+
+        <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', priority.dot)} />
+
+        <span className="flex-1 text-xs font-semibold text-[#202124] leading-snug break-words">
           {task.title}
         </span>
-        <button
-          onClick={e => { e.stopPropagation(); onDelete(task.id) }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-[#9CA3AF] hover:text-[#B91C1C] ml-1 flex-shrink-0 p-0.5 rounded"
-          aria-label="Delete task"
-        >
-          <Trash2 size={13} />
-        </button>
       </div>
+
+      {/* Description Preview */}
+      {task.description && (
+        <p className="text-[11px] text-[#6B7280] line-clamp-2 pl-4 mb-2.5 leading-relaxed">
+          {task.description}
+        </p>
+      )}
 
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2 ml-5">
-          {task.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="text-[10px] font-medium px-1.5 py-0.5 bg-[#F1F1EE] rounded text-[#6B7280]">
-              {tag}
+        <div className="flex flex-wrap gap-1 pl-4 mb-2.5">
+          {task.tags.map((tag) => (
+            <span
+              key={tag}
+              className="text-[9px] font-medium bg-[#F1F1EE] text-[#4B5563] px-1.5 py-0.5 rounded"
+            >
+              #{tag}
             </span>
           ))}
         </div>
       )}
 
-      {/* Footer: due date, assignee */}
-      <div className="flex items-center justify-between gap-2 ml-5 pt-1">
-        {task.due_date ? (
-          <span className={cn(
-            'flex items-center gap-1 text-[11px] font-medium',
-            overdue ? 'text-[#B91C1C]' : days !== null && days <= 2 ? 'text-[#B45309]' : 'text-[#6B7280]'
-          )}>
-            <Clock size={11} />
-            {overdue ? 'Overdue' : formatRelativeDate(task.due_date)}
-          </span>
-        ) : <span />}
-        {assignee && (
-          <Avatar name={assignee.profile?.full_name || assignee.display_name} size="xs" />
-        )}
+      {/* Footer row: Due date & Assignee Avatar */}
+      <div className="flex items-center justify-between text-[11px] pt-2 border-t border-[#F1F1EE] text-[#6B7280]">
+        <div className="flex items-center gap-1.5">
+          {task.due_date ? (
+            <span
+              className={cn(
+                'flex items-center gap-1 font-medium text-[10px]',
+                overdue
+                  ? 'text-red-600 bg-red-50 px-1.5 py-0.5 rounded'
+                  : 'text-[#6B7280]'
+              )}
+            >
+              <Calendar size={11} />
+              {overdue ? 'Overdue' : formatDate(task.due_date, 'MMM d')}
+            </span>
+          ) : (
+            <span className="text-[10px] text-[#9CA3AF]">No due date</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {assignee ? (
+            <Avatar
+              name={assignee.profile?.full_name || assignee.display_name}
+              src={assignee.profile?.avatar_url}
+              size="xs"
+              className="ring-1 ring-white"
+            />
+          ) : (
+            <span className="w-5 h-5 rounded-full border border-dashed border-[#D1D5DB] flex items-center justify-center text-[9px] text-[#9CA3AF]">
+              +
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-// ──────────────────────────────────────────
-// Column
-// ──────────────────────────────────────────
+// ─── Kanban Column ─────────────────────────────────────────────────────────────
 
-interface ColumnProps {
-  column: typeof COLUMNS[0]
+interface KanbanColumnProps {
+  column: (typeof COLUMNS)[0]
   tasks: Task[]
   members: Member[]
-  onAddTask: (status: Task['status']) => void
   onOpenTask: (task: Task) => void
   onDeleteTask: (taskId: string) => void
+  onQuickAdd: (status: KanbanStatus) => void
 }
 
-function Column({ column, tasks, members, onAddTask, onOpenTask, onDeleteTask }: ColumnProps) {
+function KanbanColumn({
+  column,
+  tasks,
+  members,
+  onOpenTask,
+  onDeleteTask,
+  onQuickAdd,
+}: KanbanColumnProps) {
+  const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks])
+
   return (
-    <div className="flex flex-col w-72 flex-shrink-0 bg-[#F1F1EE] rounded-[8px] border border-[#E5E7EB] shadow-xs">
-      {/* Column header */}
-      <div className="flex items-center justify-between px-3.5 py-3 border-b border-[#E5E7EB] bg-white rounded-t-[8px]">
+    <div className="flex flex-col w-72 sm:w-80 shrink-0 bg-[#F1F1EE] border border-[#E5E7EB] rounded-xl overflow-hidden max-h-[calc(100vh-140px)]">
+      {/* Column Header */}
+      <div className="flex items-center justify-between px-3.5 py-3 border-b border-[#E5E7EB] bg-white">
         <div className="flex items-center gap-2">
-          <span className={cn('text-xs font-bold uppercase tracking-wider', column.color)}>{column.label}</span>
-          <span className="text-[11px] font-semibold text-[#6B7280] bg-[#F1F1EE] border border-[#E5E7EB] rounded-full px-2 py-0.2 min-w-5 text-center">
+          <div className={cn('w-2 h-2 rounded-full', column.dotColor)} />
+          <h2 className="text-xs font-bold text-[#202124]">{column.label}</h2>
+          <span
+            className={cn(
+              'text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-4 text-center',
+              column.badgeBg,
+              column.color
+            )}
+          >
             {tasks.length}
           </span>
         </div>
+
         <button
-          onClick={() => onAddTask(column.id)}
-          className="text-[#9CA3AF] hover:text-[#4338CA] transition-colors p-1 rounded hover:bg-[#F7F7F5]"
-          aria-label={`Add task to ${column.label}`}
+          onClick={() => onQuickAdd(column.id)}
+          className="w-6 h-6 rounded flex items-center justify-center text-[#6B7280] hover:text-[#202124] hover:bg-[#F7F7F5] transition-colors"
+          title={`Add task to ${column.label}`}
         >
-          <Plus size={15} />
+          <Plus size={14} />
         </button>
       </div>
 
-      {/* Droppable area */}
-      <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 overflow-y-auto p-2.5 space-y-2 min-h-[140px] max-h-[calc(100vh-230px)]">
-          {tasks.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-xs text-[#9CA3AF]">No tasks</p>
-              <button
-                onClick={() => onAddTask(column.id)}
-                className="mt-1 text-xs text-[#4338CA] hover:underline font-medium"
-              >
-                + Add a task
-              </button>
-            </div>
-          ) : (
-            tasks.map(task => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                members={members}
-                onOpen={onOpenTask}
-                onDelete={onDeleteTask}
-              />
-            ))
-          )}
-        </div>
-      </SortableContext>
+      {/* Task List */}
+      <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5">
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              members={members}
+              onOpen={onOpenTask}
+              onDelete={onDeleteTask}
+            />
+          ))}
+        </SortableContext>
+
+        {tasks.length === 0 && (
+          <div className="py-8 text-center border-2 border-dashed border-[#D1D5DB] rounded-lg">
+            <p className="text-[11px] text-[#9CA3AF]">No tasks here yet</p>
+            <button
+              onClick={() => onQuickAdd(column.id)}
+              className="mt-1 text-xs font-semibold text-[#4338CA] hover:underline"
+            >
+              + Add a task
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Add Task Button */}
+      <div className="p-2 border-t border-[#E5E7EB] bg-white/50">
+        <button
+          onClick={() => onQuickAdd(column.id)}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[#6B7280] hover:text-[#202124] hover:bg-white rounded-lg transition-all"
+        >
+          <Plus size={13} />
+          <span>Add task</span>
+        </button>
+      </div>
     </div>
   )
 }
@@ -226,51 +343,28 @@ function Column({ column, tasks, members, onAddTask, onOpenTask, onDeleteTask }:
 
 interface TaskDetailModalProps {
   task: Task | null
-  members: Member[]
   projectId: string
+  members: Member[]
   onClose: () => void
-  onSave: (updated: Partial<Task>) => void
+  onUpdate: (updated: Partial<Task>) => Promise<void>
+  onDelete: (id: string) => Promise<void>
 }
 
-function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDetailModalProps) {
+function TaskDetailModal({
+  task,
+  projectId,
+  members,
+  onClose,
+  onUpdate,
+  onDelete,
+}: TaskDetailModalProps) {
   const { user } = useAuthStore()
-  const qc = useQueryClient()
-  const [form, setForm] = useState<Partial<Task>>(task || {})
-  const [newComment, setNewComment] = useState('')
-  const [activeTab, setActiveTab] = useState('details')
+  const [form, setForm] = useState<Partial<Task>>({})
   const [saving, setSaving] = useState(false)
-
-  const { data: comments } = useQuery({
-    queryKey: ['task-comments', task?.id],
-    queryFn: async () => {
-      if (!task?.id) return []
-      const { data, error } = await supabase
-        .from('comments')
-        .select('*, author:profiles(*)')
-        .eq('task_id', task.id)
-        .order('created_at', { ascending: true })
-      if (error) throw error
-      return data
-    },
-    enabled: !!task?.id && activeTab === 'comments',
-  })
-
-  const { data: subtasks, refetch: refetchSubtasks } = useQuery({
-    queryKey: ['subtasks', task?.id],
-    queryFn: async () => {
-      if (!task?.id) return []
-      const { data, error } = await supabase
-        .from('subtasks')
-        .select('*')
-        .eq('task_id', task.id)
-        .order('order_index', { ascending: true })
-      if (error) throw error
-      return data
-    },
-    enabled: !!task?.id,
-  })
-
   const [titleError, setTitleError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details')
+  const [newComment, setNewComment] = useState('')
+  const qc = useQueryClient()
 
   useEffect(() => {
     if (task) {
@@ -279,17 +373,45 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
     }
   }, [task])
 
+  const { data: comments = [], refetch: refetchComments } = useQuery({
+    queryKey: ['task-comments', task?.id],
+    queryFn: async () => {
+      if (!task?.id) return []
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*, author:profiles(*)')
+        .eq('task_id', task.id)
+        .order('created_at', { ascending: true })
+      if (error) return []
+      return data || []
+    },
+    enabled: !!task?.id,
+  })
+
+  const { data: subtasks = [], refetch: refetchSubtasks } = useQuery({
+    queryKey: ['task-subtasks', task?.id],
+    queryFn: async () => {
+      if (!task?.id) return []
+      const { data, error } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', task.id)
+        .order('order_index', { ascending: true })
+      if (error) return []
+      return data || []
+    },
+    enabled: !!task?.id,
+  })
+
   const handleSave = async () => {
-    if (!task) return
     if (!form.title?.trim()) {
-      setTitleError('Task title cannot be empty.')
+      setTitleError('Task title is required.')
       return
     }
-    setTitleError(null)
     setSaving(true)
     try {
-      await onSave(form)
-      toast('Task updated successfully', 'success')
+      await onUpdate(form)
+      toast('Task saved', 'success')
       onClose()
     } catch (err: any) {
       toast(err?.message || 'Failed to update task', 'error')
@@ -298,7 +420,20 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
     }
   }
 
-  const addComment = async () => {
+  const handleDelete = async () => {
+    if (!task) return
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        await onDelete(task.id)
+        toast('Task deleted', 'info')
+        onClose()
+      } catch (err: any) {
+        toast(err?.message || 'Failed to delete task', 'error')
+      }
+    }
+  }
+
+  const handleAddComment = async () => {
     if (!newComment.trim() || !task || !user) return
     try {
       await supabase.from('comments').insert({
@@ -308,42 +443,67 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
         content: newComment.trim(),
       })
       setNewComment('')
+      refetchComments()
       toast('Comment posted', 'info')
-      qc.invalidateQueries({ queryKey: ['task-comments', task.id] })
     } catch (err: any) {
       toast(err?.message || 'Failed to post comment', 'error')
     }
   }
 
-  const toggleSubtask = async (id: string, completed: boolean) => {
+  const handleToggleSubtask = async (id: string, completed: boolean) => {
     await supabase.from('subtasks').update({ completed }).eq('id', id)
     refetchSubtasks()
   }
 
-  const addSubtask = async (title: string) => {
+  const handleAddSubtask = async (title: string) => {
     if (!task || !title.trim()) return
     await supabase.from('subtasks').insert({
       task_id: task.id,
       title: title.trim(),
-      order_index: (subtasks?.length || 0),
+      order_index: subtasks.length,
     })
-    toast('Subtask added', 'success')
     refetchSubtasks()
   }
 
   if (!task) return null
 
-  const priorityOptions = Object.entries(PRIORITY_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
-  const statusOptions = Object.entries(STATUS_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
-  const memberOptions = members.map(m => ({ value: m.user_id, label: m.profile?.full_name || m.display_name || 'Unknown' }))
+  const statusOptions = COLUMNS.map((c) => ({ value: c.id, label: c.label }))
+  const priorityOptions = Object.entries(PRIORITY_CONFIG).map(([v, c]) => ({
+    value: v,
+    label: c.label,
+  }))
+  const memberOptions = members.map((m) => ({
+    value: m.user_id,
+    label: m.profile?.full_name || m.display_name || 'Member',
+  }))
 
   return (
-    <Modal open={!!task} onClose={onClose} size="lg" title={`Task #${task.task_number || ''}`}
+    <Modal
+      open={!!task}
+      onClose={onClose}
+      size="lg"
+      title={`Task #${task.task_number || task.id.slice(0, 6)}`}
       footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" loading={saving} onClick={handleSave}>Save Changes</Button>
-        </>
+        <div className="flex items-center justify-between w-full">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="text-red-600 hover:bg-red-50"
+          >
+            <Trash2 size={14} />
+            <span>Delete</span>
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button variant="primary" loading={saving} onClick={handleSave}>
+              Save Changes
+            </Button>
+          </div>
+        </div>
       }
     >
       <div className="space-y-4">
@@ -351,345 +511,158 @@ function TaskDetailModal({ task, members, projectId, onClose, onSave }: TaskDeta
           label="Title *"
           value={form.title || ''}
           error={titleError || undefined}
-          onChange={e => {
+          onChange={(e) => {
             setTitleError(null)
-            setForm(f => ({ ...f, title: e.target.value }))
+            setForm((f) => ({ ...f, title: e.target.value }))
           }}
           placeholder="Task title..."
           required
         />
+
         <Textarea
           label="Description"
           value={form.description || ''}
-          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           rows={3}
+          placeholder="Details about what must be done..."
         />
+
         <div className="grid grid-cols-2 gap-3">
+          <Select
+            label="Workflow Status"
+            options={statusOptions}
+            value={form.status || 'todo'}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, status: e.target.value as Task['status'] }))
+            }
+          />
+
           <Select
             label="Priority"
             options={priorityOptions}
             value={form.priority || 'medium'}
-            onChange={e => setForm(f => ({ ...f, priority: e.target.value as Task['priority'] }))}
-          />
-          <Select
-            label="Status"
-            options={statusOptions}
-            value={form.status || 'todo'}
-            onChange={e => setForm(f => ({ ...f, status: e.target.value as Task['status'] }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, priority: e.target.value as Task['priority'] }))
+            }
           />
         </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Select
             label="Assignee"
             placeholder="Unassigned"
             options={memberOptions}
             value={form.assignee_id || ''}
-            onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value || null }))}
+            onChange={(e) => setForm((f) => ({ ...f, assignee_id: e.target.value || null }))}
           />
+
           <Input
             label="Due Date"
             type="date"
             value={form.due_date || ''}
-            onChange={e => setForm(f => ({ ...f, due_date: e.target.value || null }))}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Estimated Hours"
-            type="number"
-            min="0"
-            value={form.estimated_hours || ''}
-            onChange={e => setForm(f => ({ ...f, estimated_hours: e.target.value ? Number(e.target.value) : null }))}
-          />
-          <Input
-            label="Actual Hours"
-            type="number"
-            min="0"
-            value={form.actual_hours || ''}
-            onChange={e => setForm(f => ({ ...f, actual_hours: e.target.value ? Number(e.target.value) : null }))}
+            onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value || null }))}
           />
         </div>
 
-        <Tabs
-          tabs={[
-            { id: 'details', label: 'Subtasks', count: subtasks?.length },
-            { id: 'comments', label: 'Comments', count: comments?.length },
-          ]}
-          active={activeTab}
-          onChange={setActiveTab}
-        />
-
-        {activeTab === 'details' && (
-          <SubtaskList
-            subtasks={subtasks || []}
-            onToggle={toggleSubtask}
-            onAdd={addSubtask}
+        {/* Subtasks and Comments Tabs */}
+        <div className="pt-2">
+          <Tabs
+            tabs={[
+              { id: 'details', label: 'Checklist / Subtasks', count: subtasks.length },
+              { id: 'comments', label: 'Discussion & Activity', count: comments.length },
+            ]}
+            active={activeTab}
+            onChange={setActiveTab as any}
           />
-        )}
 
-        {activeTab === 'comments' && (
-          <div className="space-y-3">
-            {(comments || []).map((c: any) => (
-              <div key={c.id} className="flex gap-2">
-                <Avatar name={c.author?.full_name} size="xs" className="mt-0.5 flex-shrink-0" />
-                <div className="min-w-0">
-                  <span className="text-xs font-medium text-[--color-text-primary]">{c.author?.full_name}</span>
-                  <span className="text-xs text-[--color-text-tertiary] ml-2">{formatDate(c.created_at, 'MMM d, h:mm a')}</span>
-                  <p className="text-sm text-[--color-text-secondary] mt-0.5 break-words">{c.content}</p>
+          {activeTab === 'details' && (
+            <div className="pt-3 space-y-2">
+              {subtasks.map((s: any) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-2 p-2 bg-[#F7F7F5] rounded-lg border border-[#E5E7EB]"
+                >
+                  <Checkbox
+                    checked={s.completed}
+                    onChange={(e) => handleToggleSubtask(s.id, e.target.checked)}
+                  />
+                  <span
+                    className={cn(
+                      'text-xs flex-1',
+                      s.completed && 'line-through text-[#9CA3AF]'
+                    )}
+                  >
+                    {s.title}
+                  </span>
                 </div>
+              ))}
+
+              <div className="flex gap-2 pt-1">
+                <Input
+                  id="new-subtask-input"
+                  placeholder="Add a checklist item..."
+                  className="text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const val = (e.target as HTMLInputElement).value
+                      if (val.trim()) {
+                        handleAddSubtask(val)
+                        ;(e.target as HTMLInputElement).value = ''
+                      }
+                    }
+                  }}
+                />
               </div>
-            ))}
-            <div className="flex gap-2">
-              <Input
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && addComment()}
-                className="flex-1"
-              />
-              <Button variant="primary" size="sm" onClick={addComment}>Post</Button>
             </div>
-          </div>
-        )}
-      </div>
-    </Modal>
-  )
-}
+          )}
 
-function SubtaskList({ subtasks, onToggle, onAdd }: {
-  subtasks: any[]; onToggle: (id: string, completed: boolean) => void; onAdd: (title: string) => void
-}) {
-  const [newTitle, setNewTitle] = useState('')
-  const completed = subtasks.filter(s => s.completed).length
+          {activeTab === 'comments' && (
+            <div className="pt-3 space-y-3">
+              {comments.map((c: any) => (
+                <div key={c.id} className="flex gap-2.5 p-2.5 rounded-lg bg-[#F7F7F5] border border-[#E5E7EB]">
+                  <Avatar
+                    name={c.author?.full_name}
+                    src={c.author?.avatar_url}
+                    size="xs"
+                    className="shrink-0 mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold text-[#202124]">
+                        {c.author?.full_name || 'Member'}
+                      </span>
+                      <span className="text-[#9CA3AF]">
+                        {formatRelativeDate(c.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#4B5563] mt-1 break-words">{c.content}</p>
+                  </div>
+                </div>
+              ))}
 
-  return (
-    <div className="space-y-2">
-      {subtasks.length > 0 && (
-        <p className="text-xs text-[--color-text-tertiary]">{completed}/{subtasks.length} completed</p>
-      )}
-      {subtasks.map(s => (
-        <div key={s.id} className="flex items-center gap-2">
-          <Checkbox
-            checked={s.completed}
-            onChange={e => onToggle(s.id, e.target.checked)}
-          />
-          <span className={cn('text-sm flex-1', s.completed && 'line-through text-[--color-text-tertiary]')}>
-            {s.title}
-          </span>
-        </div>
-      ))}
-      <div className="flex gap-2">
-        <Input
-          value={newTitle}
-          onChange={e => setNewTitle(e.target.value)}
-          placeholder="Add subtask..."
-          onKeyDown={e => {
-            if (e.key === 'Enter' && newTitle.trim()) {
-              onAdd(newTitle)
-              setNewTitle('')
-            }
-          }}
-          className="flex-1"
-        />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => { if (newTitle.trim()) { onAdd(newTitle); setNewTitle('') } }}
-        >
-          Add
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-// ─── Create Task Modal ─────────────────────────────────────────────────────────
-
-interface CreateTaskModalProps {
-  open: boolean
-  onClose: () => void
-  defaultStatus: Task['status']
-  projectId: string
-  members: Member[]
-  onCreate: (task: Partial<Task>) => Promise<void>
-}
-
-function CreateTaskModal({ open, onClose, defaultStatus, projectId, members, onCreate }: CreateTaskModalProps) {
-  const [form, setForm] = useState<Partial<Task>>({ status: defaultStatus, priority: 'medium' })
-  const [loading, setLoading] = useState(false)
-  const [tagInput, setTagInput] = useState('')
-  const [titleError, setTitleError] = useState<string | null>(null)
-
-  useEffect(() => {
-    setForm({ status: defaultStatus, priority: 'medium' })
-    setTitleError(null)
-  }, [defaultStatus, open])
-
-  const handleCreate = async () => {
-    if (!form.title?.trim()) {
-      setTitleError('Task title is required. Please specify what needs to be done.')
-      return
-    }
-    setTitleError(null)
-    setLoading(true)
-    try {
-      await onCreate(form)
-      toast('Task created successfully', 'success')
-      onClose()
-    } catch (err: any) {
-      toast(err?.message || 'Failed to create task', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addTag = (tag: string) => {
-    if (!tag.trim()) return
-    setForm(f => ({ ...f, tags: [...(f.tags || []), tag.trim()] }))
-    setTagInput('')
-  }
-
-  const removeTag = (tag: string) => {
-    setForm(f => ({ ...f, tags: (f.tags || []).filter(t => t !== tag) }))
-  }
-
-  const priorityOptions = Object.entries(PRIORITY_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
-  const statusOptions = Object.entries(STATUS_CONFIG).map(([v, c]) => ({ value: v, label: c.label }))
-  const memberOptions = members.map(m => ({ value: m.user_id, label: m.profile?.full_name || m.display_name || 'Unknown' }))
-
-  return (
-    <Modal open={open} onClose={onClose} title="Create Task"
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" loading={loading} onClick={handleCreate}>Create Task</Button>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <Input
-          label="Title *"
-          value={form.title || ''}
-          error={titleError || undefined}
-          onChange={e => {
-            setTitleError(null)
-            setForm(f => ({ ...f, title: e.target.value }))
-          }}
-          placeholder="e.g. Implement user authentication middleware"
-          autoFocus
-          required
-        />
-        <Textarea
-          label="Description"
-          value={form.description || ''}
-          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-          placeholder="What needs to be done?"
-        />
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="Priority" options={priorityOptions} value={form.priority || 'medium'}
-            onChange={e => setForm(f => ({ ...f, priority: e.target.value as Task['priority'] }))} />
-          <Select label="Status" options={statusOptions} value={form.status || 'todo'}
-            onChange={e => setForm(f => ({ ...f, status: e.target.value as Task['status'] }))} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="Assignee" placeholder="Unassigned" options={memberOptions} value={form.assignee_id || ''}
-            onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value || null }))} />
-          <Input label="Due Date" type="date" value={form.due_date || ''}
-            onChange={e => setForm(f => ({ ...f, due_date: e.target.value || null }))} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Estimated Hours" type="number" min="0" value={form.estimated_hours || ''}
-            onChange={e => setForm(f => ({ ...f, estimated_hours: e.target.value ? Number(e.target.value) : null }))} />
-        </div>
-        {/* Tags */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-[--color-text-primary]">Tags</label>
-          <div className="flex flex-wrap gap-1 mb-1">
-            {(form.tags || []).map(tag => (
-              <span key={tag} className="flex items-center gap-1 text-xs px-2 py-0.5 bg-[--color-accent-light] text-[--color-accent] rounded">
-                {tag}
-                <button onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`}><X size={10} /></button>
-              </span>
-            ))}
-          </div>
-          <Input
-            value={tagInput}
-            onChange={e => setTagInput(e.target.value)}
-            placeholder="Add tag and press Enter..."
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
-          />
+              <div className="flex gap-2">
+                <Input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="flex-1 text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleAddComment()
+                    }
+                  }}
+                />
+                <Button variant="primary" size="sm" onClick={handleAddComment}>
+                  Post
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
-  )
-}
-
-// ─── Filter Bar ────────────────────────────────────────────────────────────────
-
-interface FilterState {
-  search: string
-  priority: string
-  assignee: string
-  overdue: boolean
-}
-
-function FilterBar({ filters, setFilters, members }: {
-  filters: FilterState
-  setFilters: React.Dispatch<React.SetStateAction<FilterState>>
-  members: Member[]
-}) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div className="relative">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[--color-text-tertiary]" />
-        <input
-          type="search"
-          placeholder="Search tasks..."
-          value={filters.search}
-          onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-          className="pl-8 pr-3 py-1.5 text-sm border border-[--color-border] rounded-[--radius-md] bg-white focus:outline-none focus:ring-1 focus:ring-[--color-accent] w-48"
-          aria-label="Search tasks"
-        />
-      </div>
-      <select
-        value={filters.priority}
-        onChange={e => setFilters(f => ({ ...f, priority: e.target.value }))}
-        className="text-sm border border-[--color-border] rounded-[--radius-md] px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[--color-accent]"
-        aria-label="Filter by priority"
-      >
-        <option value="">All priorities</option>
-        {Object.entries(PRIORITY_CONFIG).map(([v, c]) => (
-          <option key={v} value={v}>{c.label}</option>
-        ))}
-      </select>
-      <select
-        value={filters.assignee}
-        onChange={e => setFilters(f => ({ ...f, assignee: e.target.value }))}
-        className="text-sm border border-[--color-border] rounded-[--radius-md] px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[--color-accent]"
-        aria-label="Filter by assignee"
-      >
-        <option value="">All members</option>
-        {members.map(m => (
-          <option key={m.user_id} value={m.user_id}>
-            {m.profile?.full_name || m.display_name || 'Unknown'}
-          </option>
-        ))}
-      </select>
-      <label className="flex items-center gap-1.5 text-sm text-[--color-text-secondary] cursor-pointer">
-        <input
-          type="checkbox"
-          checked={filters.overdue}
-          onChange={e => setFilters(f => ({ ...f, overdue: e.target.checked }))}
-          className="rounded border-[--color-border]"
-        />
-        Overdue only
-      </label>
-      {(filters.search || filters.priority || filters.assignee || filters.overdue) && (
-        <Button variant="ghost" size="sm" onClick={() => setFilters({ search: '', priority: '', assignee: '', overdue: false })}>
-          <X size={12} /> Clear
-        </Button>
-      )}
-    </div>
   )
 }
 
@@ -698,264 +671,401 @@ function FilterBar({ filters, setFilters, members }: {
 export default function KanbanPage() {
   const { currentProject } = useProjectStore()
   const { user } = useAuthStore()
-  const qc = useQueryClient()
+  const queryClient = useQueryClient()
 
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [createStatus, setCreateStatus] = useState<Task['status']>('todo')
-  const [showCreate, setShowCreate] = useState(false)
-  const [filters, setFilters] = useState<FilterState>({ search: '', priority: '', assignee: '', overdue: false })
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [quickAddStatus, setQuickAddStatus] = useState<KanbanStatus | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState<string>('all')
 
-  const { data: allTasks = [], isLoading } = useTasks(currentProject?.id)
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks(currentProject?.id)
   const { data: members = [] } = useMembers(currentProject?.id)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  // Apply filters
-  const filteredTasks = useMemo(() => {
-    return allTasks.filter(task => {
-      if (filters.search) {
-        const q = filters.search.toLowerCase()
-        if (!task.title.toLowerCase().includes(q)) return false
-      }
-      if (filters.priority && task.priority !== filters.priority) return false
-      if (filters.assignee && task.assignee_id !== filters.assignee) return false
-      if (filters.overdue && (!isOverdue(task.due_date) || task.status === 'done')) return false
-      return true
-    })
-  }, [allTasks, filters])
-
-  const tasksByColumn = useMemo(() => {
-    const map: Record<string, Task[]> = {}
-    COLUMNS.forEach(col => { map[col.id] = [] })
-    filteredTasks.forEach(task => {
-      if (map[task.status]) map[task.status].push(task)
-    })
-    return map
-  }, [filteredTasks])
-
-  const updateTaskStatus = useMutation({
-    mutationFn: async ({ taskId, status, order }: { taskId: string; status: Task['status']; order: number }) => {
-      const { error } = await supabase
+  // Mutations
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, ...patch }: Partial<Task> & { id: string }) => {
+      const { data, error } = await supabase
         .from('tasks')
-        .update({ status, column_order: order, updated_at: new Date().toISOString() })
-        .eq('id', taskId)
-      if (error) throw error
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] }),
-  })
-
-  const updateTask = useMutation({
-    mutationFn: async (updates: Partial<Task> & { id: string }) => {
-      const { id, ...rest } = updates
-      const { error } = await supabase
-        .from('tasks')
-        .update({ ...rest, updated_at: new Date().toISOString() })
+        .update(patch)
         .eq('id', id)
+        .select()
+        .single()
       if (error) throw error
+      return data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', currentProject?.id] })
+    },
   })
 
-  const createTask = useMutation({
-    mutationFn: async (task: Partial<Task>) => {
-      if (!currentProject || !user) throw new Error('No project or user')
-      // Get next task number
-      const { count } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('project_id', currentProject.id)
-      const taskNumber = (count || 0) + 1
-      const columnTasks = tasksByColumn[task.status || 'todo']
-      const { error } = await supabase.from('tasks').insert({
-        project_id: currentProject.id,
-        creator_id: user.id,
-        task_number: taskNumber,
-        column_order: columnTasks.length,
-        ...task,
-      })
-      if (error) throw error
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] }),
-  })
-
-  const deleteTask = useMutation({
-    mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('tasks').delete().eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] })
-      toast('Task deleted successfully', 'info')
-    },
-    onError: (err: any) => {
-      toast(err?.message || 'Failed to delete task', 'error')
+      queryClient.invalidateQueries({ queryKey: ['tasks', currentProject?.id] })
     },
   })
 
+  const createTaskMutation = useMutation({
+    mutationFn: async (newTask: Partial<Task>) => {
+      if (!currentProject || !user) throw new Error('No active project')
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+          ...newTask,
+          project_id: currentProject.id,
+          creator_id: user.id,
+        })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', currentProject?.id] })
+    },
+  })
+
+  // Filter tasks
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      const matchesSearch =
+        !searchQuery ||
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchesPriority =
+        priorityFilter === 'all' || t.priority === priorityFilter
+
+      return matchesSearch && matchesPriority
+    })
+  }, [tasks, searchQuery, priorityFilter])
+
+  // Group strictly into the 4 workflow columns
+  const columnsWithTasks = useMemo(() => {
+    const map: Record<KanbanStatus, Task[]> = {
+      todo: [],
+      in_progress: [],
+      in_review: [],
+      done: [],
+    }
+
+    filteredTasks.forEach((task) => {
+      const statusKey = normalizeStatus(task.status)
+      map[statusKey].push(task)
+    })
+
+    return map
+  }, [filteredTasks])
+
+  // Drag and Drop handlers
   const handleDragStart = (event: DragStartEvent) => {
-    const task = allTasks.find(t => t.id === event.active.id)
+    const task = tasks.find((t) => t.id === event.active.id)
     if (task) setActiveTask(task)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveTask(null)
     const { active, over } = event
+    setActiveTask(null)
+
     if (!over) return
 
-    const activeTaskData = allTasks.find(t => t.id === active.id)
-    if (!activeTaskData) return
+    const activeId = active.id as string
+    const overId = over.id as string
 
-    // Determine target column
-    let targetColumn: Task['status'] = activeTaskData.status
-    const overTask = allTasks.find(t => t.id === over.id)
-    if (overTask) {
-      targetColumn = overTask.status
-    } else if (COLUMNS.find(c => c.id === over.id)) {
-      targetColumn = over.id as Task['status']
+    const currentTask = tasks.find((t) => t.id === activeId)
+    if (!currentTask) return
+
+    // Find if over is a column
+    const isOverColumn = COLUMNS.some((col) => col.id === overId)
+
+    if (isOverColumn) {
+      const newStatus = overId as KanbanStatus
+      if (currentTask.status !== newStatus) {
+        updateTaskMutation.mutate({ id: activeId, status: newStatus })
+      }
+      return
     }
 
-    if (targetColumn !== activeTaskData.status || active.id !== over.id) {
-      await updateTaskStatus.mutateAsync({
-        taskId: activeTaskData.id,
-        status: targetColumn,
-        order: tasksByColumn[targetColumn].length,
+    // Over another task
+    const overTask = tasks.find((t) => t.id === overId)
+    if (overTask && currentTask.id !== overTask.id) {
+      const targetStatus = normalizeStatus(overTask.status)
+      updateTaskMutation.mutate({
+        id: activeId,
+        status: targetStatus,
+        column_order: overTask.column_order,
       })
     }
   }
 
-  const handleSaveTask = async (updates: Partial<Task>) => {
-    if (!selectedTask) return
-    await updateTask.mutateAsync({ id: selectedTask.id, ...updates })
-    qc.invalidateQueries({ queryKey: ['tasks', currentProject?.id] })
-    setSelectedTask(null)
-  }
-
-  const handleDeleteTask = async (taskId: string) => {
-    if (deleteConfirm !== taskId) {
-      setDeleteConfirm(taskId)
-      setTimeout(() => setDeleteConfirm(null), 3000)
-      return
-    }
-    await deleteTask.mutateAsync(taskId)
-    setDeleteConfirm(null)
-    setSelectedTask(null)
-  }
-
   if (!currentProject) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="p-8">
         <EmptyState
-          title="No project selected"
-          description="Select a project from the sidebar to view its Kanban board."
+          title="No Project Selected"
+          description="Select or create a project to manage tasks on your 4-column Kanban board."
         />
       </div>
     )
   }
 
-  const overdueCount = allTasks.filter(t => isOverdue(t.due_date) && t.status !== 'done').length
-
   return (
-    <div className="flex flex-col h-full">
-      {/* Page header */}
-      <div className="px-6 py-4 bg-white border-b border-[#E5E7EB] flex-shrink-0 shadow-xs">
-        <div className="flex items-center justify-between gap-4 mb-3">
-          <div>
-            <h1 className="text-lg font-bold text-[#202124]">Kanban Board</h1>
-            <p className="text-xs text-[#6B7280] mt-0.5">
-              {allTasks.length} tasks · {allTasks.filter(t => t.status === 'done').length} completed
-              {overdueCount > 0 && (
-                <span className="ml-2 text-[#B91C1C] font-semibold">· {overdueCount} overdue</span>
-              )}
-            </p>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Top Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-white border-b border-[#E5E7EB] shrink-0">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-bold text-[#202124]">Kanban Board</h1>
+            <Badge variant="default" size="sm">
+              4 Workflow States
+            </Badge>
           </div>
+          <p className="text-xs text-[#6B7280] mt-0.5">
+            Organized strictly into To Do, In Progress, In Review, and Done
+          </p>
+        </div>
+
+        {/* Search, Filter & Add Button */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-[#9CA3AF] absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Filter tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-lg focus:outline-none focus:border-[#4338CA] focus:bg-white transition-all w-36 sm:w-48 text-[#202124]"
+            />
+          </div>
+
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="text-xs bg-[#F7F7F5] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 font-medium text-[#4B5563] focus:outline-none focus:border-[#4338CA]"
+          >
+            <option value="all">All Priorities</option>
+            <option value="urgent">Urgent</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+
           <Button
             variant="primary"
             size="sm"
-            onClick={() => { setCreateStatus('todo'); setShowCreate(true) }}
+            onClick={() => setQuickAddStatus('todo')}
+            className="shrink-0 shadow-xs"
           >
-            <Plus size={15} /> New Task
+            <Plus size={14} />
+            <span className="hidden sm:inline">Add Task</span>
           </Button>
         </div>
-        <FilterBar filters={filters} setFilters={setFilters} members={members} />
       </div>
 
-      {/* Board */}
-      {isLoading ? (
-        <div className="flex items-center justify-center flex-1">
-          <Spinner size="lg" />
-        </div>
-      ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex-1 overflow-x-auto">
-            <div className="flex gap-3 p-4 min-w-max h-full">
-              {COLUMNS.map(col => (
-                <Column
+      {/* Board Columns Canvas */}
+      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 sm:p-6 bg-[#F7F7F5]">
+        {tasksLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex items-start gap-4 h-full pb-4">
+              {COLUMNS.map((col) => (
+                <KanbanColumn
                   key={col.id}
                   column={col}
-                  tasks={tasksByColumn[col.id] || []}
+                  tasks={columnsWithTasks[col.id]}
                   members={members}
-                  onAddTask={(status) => { setCreateStatus(status); setShowCreate(true) }}
                   onOpenTask={setSelectedTask}
-                  onDeleteTask={handleDeleteTask}
+                  onDeleteTask={(id) => deleteTaskMutation.mutate(id)}
+                  onQuickAdd={setQuickAddStatus}
                 />
               ))}
             </div>
-          </div>
 
-          <DragOverlay>
-            {activeTask && (
-              <div className="w-72 opacity-95">
-                <TaskCard
-                  task={activeTask}
-                  members={members}
-                  onOpen={() => {}}
-                  onDelete={() => {}}
-                  isDragging
-                />
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
+            <DragOverlay>
+              {activeTask ? (
+                <div className="w-72 bg-white border-2 border-[#4338CA] rounded-lg p-3.5 shadow-2xl rotate-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-[#202124]">
+                      {activeTask.title}
+                    </span>
+                  </div>
+                  {activeTask.description && (
+                    <p className="text-[11px] text-[#6B7280] line-clamp-1">
+                      {activeTask.description}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+      </div>
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          projectId={currentProject.id}
+          members={members}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={async (updated) => {
+            await updateTaskMutation.mutateAsync({ id: selectedTask.id, ...updated })
+          }}
+          onDelete={async (id) => {
+            await deleteTaskMutation.mutateAsync(id)
+          }}
+        />
       )}
 
-      {/* Delete confirmation toast */}
-      {deleteConfirm && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white border border-[--color-danger-muted] rounded-[--radius-lg] shadow-[--shadow-lg] px-4 py-3 flex items-center gap-3 z-50">
-          <AlertCircle size={16} className="text-[--color-danger]" />
-          <span className="text-sm">Click delete again to confirm</span>
-          <Button variant="danger" size="xs" onClick={() => deleteTask.mutateAsync(deleteConfirm)}>Delete</Button>
-          <button onClick={() => setDeleteConfirm(null)} className="text-[--color-text-tertiary]"><X size={14} /></button>
-        </div>
+      {/* Quick Add In Column Modal */}
+      {quickAddStatus && (
+        <QuickAddModal
+          open={!!quickAddStatus}
+          defaultStatus={quickAddStatus}
+          onClose={() => setQuickAddStatus(null)}
+          onCreate={async (task) => {
+            await createTaskMutation.mutateAsync(task)
+            toast('Task created!', 'success')
+            setQuickAddStatus(null)
+          }}
+          members={members}
+        />
       )}
-
-      {/* Modals */}
-      <CreateTaskModal
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        defaultStatus={createStatus}
-        projectId={currentProject.id}
-        members={members}
-        onCreate={async (task) => { await createTask.mutateAsync(task) }}
-      />
-
-      <TaskDetailModal
-        task={selectedTask}
-        members={members}
-        projectId={currentProject.id}
-        onClose={() => setSelectedTask(null)}
-        onSave={handleSaveTask}
-      />
     </div>
+  )
+}
+
+function QuickAddModal({
+  open,
+  defaultStatus,
+  onClose,
+  onCreate,
+  members,
+}: {
+  open: boolean
+  defaultStatus: KanbanStatus
+  onClose: () => void
+  onCreate: (task: Partial<Task>) => Promise<void>
+  members: Member[]
+}) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [priority, setPriority] = useState<Task['priority']>('medium')
+  const [assigneeId, setAssigneeId] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError('Title is required.')
+      return
+    }
+    setLoading(true)
+    try {
+      await onCreate({
+        title: title.trim(),
+        description: description.trim() || null,
+        status: defaultStatus,
+        priority,
+        assignee_id: assigneeId || null,
+        due_date: dueDate || null,
+      })
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create task')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const priorityOptions = Object.entries(PRIORITY_CONFIG).map(([v, c]) => ({
+    value: v,
+    label: c.label,
+  }))
+  const memberOptions = members.map((m) => ({
+    value: m.user_id,
+    label: m.profile?.full_name || m.display_name || 'Member',
+  }))
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={`Add Task — ${COLUMNS.find((c) => c.id === defaultStatus)?.label}`}
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button variant="primary" loading={loading} onClick={handleSubmit}>
+            Create Task
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <Input
+          label="Title *"
+          placeholder="e.g. Set up database indices and queries"
+          value={title}
+          error={error || undefined}
+          onChange={(e) => {
+            setError(null)
+            setTitle(e.target.value)
+          }}
+          autoFocus
+        />
+
+        <Textarea
+          label="Description"
+          placeholder="What needs to be done?"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <Select
+            label="Priority"
+            options={priorityOptions}
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as any)}
+          />
+          <Select
+            label="Assignee"
+            placeholder="Unassigned"
+            options={memberOptions}
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+          />
+        </div>
+
+        <Input
+          label="Due Date"
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+      </div>
+    </Modal>
   )
 }

@@ -5,7 +5,6 @@ import {
   Flag,
   AlertTriangle,
   CheckCircle2,
-  Clock,
   CalendarDays,
   MessageSquareWarning,
   Activity,
@@ -15,10 +14,13 @@ import {
   TrendingUp,
   ListChecks,
   Inbox,
+  Plus,
+  Layers,
 } from 'lucide-react'
 
 import { supabase } from '@/lib/supabase'
-import { useProjectStore } from '@/lib/store'
+import { useProjectStore, useAuthStore } from '@/lib/store'
+import { GlobalCreateTaskModal } from '@/components/GlobalCreateTaskModal'
 import {
   cn,
   formatDate,
@@ -27,7 +29,6 @@ import {
   isOverdue,
   PHASE_STATUS_CONFIG,
   CORRECTION_STATUS_CONFIG,
-  DELIVERABLE_STATUS_CONFIG,
 } from '@/lib/utils'
 import {
   Badge,
@@ -169,8 +170,14 @@ function NextActionRow({ item }: { item: NextActionItem }) {
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { currentProject } = useProjectStore()
+  const { currentProject, projects } = useProjectStore()
+  const { profile, user } = useAuthStore()
+  const [taskModalOpen, setTaskModalOpen] = React.useState(false)
   const projectId = currentProject?.id ?? null
+
+  const hour = new Date().getHours()
+  const greetingTime = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const userName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
   // ── Tasks ──────────────────────────────────────────────────────────────────
   const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
@@ -457,6 +464,37 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+      {/* ── Personalized Greeting Banner ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-xs">
+        <div className="flex items-center gap-3.5">
+          <Avatar
+            name={profile?.full_name}
+            src={profile?.avatar_url}
+            size="lg"
+            className="ring-2 ring-[#4338CA]/20 shrink-0"
+          />
+          <div>
+            <h1 className="text-base sm:text-lg font-bold text-[#202124] tracking-tight">
+              {greetingTime}, {userName}!
+            </h1>
+            <p className="text-xs text-[#6B7280] mt-0.5">
+              Welcome back. You have <strong className="text-[#202124]">{inProgressTasks} task{inProgressTasks === 1 ? '' : 's'}</strong> active and <strong className={overdueTasks > 0 ? "text-red-600" : "text-[#202124]"}>{overdueTasks} overdue</strong> today.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="secondary" size="sm" onClick={() => navigate('/projects')}>
+            <Layers size={14} />
+            <span>All Projects ({projects.length})</span>
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => setTaskModalOpen(true)}>
+            <Plus size={14} />
+            <span>Create Task</span>
+          </Button>
+        </div>
+      </div>
 
       {/* ── Project Header ─────────────────────────────────────────────────── */}
       <Card padding="lg">
@@ -894,6 +932,11 @@ export default function DashboardPage() {
 
         </div>
       </div>
+
+      <GlobalCreateTaskModal
+        open={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+      />
     </div>
   )
 }

@@ -96,14 +96,14 @@ const DEFAULT_PHASES = [
 ]
 
 const CATEGORY_OPTIONS = [
-  { value: 'web_app', label: 'Web App' },
-  { value: 'mobile_app', label: 'Mobile App' },
-  { value: 'ml_ai', label: 'ML / AI' },
-  { value: 'computer_vision', label: 'Computer Vision' },
-  { value: 'iot', label: 'IoT' },
-  { value: 'embedded_systems', label: 'Embedded Systems' },
-  { value: 'data_science', label: 'Data Science' },
-  { value: 'other', label: 'Other' },
+  { value: 'software', label: 'Software & Web App' },
+  { value: 'mobile_app', label: 'Mobile Application' },
+  { value: 'ml_ai', label: 'Machine Learning / AI' },
+  { value: 'business', label: 'Business & Startup' },
+  { value: 'research', label: 'Research & Academic' },
+  { value: 'creative', label: 'Creative & Design' },
+  { value: 'iot', label: 'IoT & Hardware' },
+  { value: 'other', label: 'Personal & General' },
 ]
 
 const SEMESTER_OPTIONS = [
@@ -182,70 +182,45 @@ function StepIndicator({ current }: { current: number }) {
 // ─── Step 1: Basic Info ───────────────────────────────────────────────────────
 
 function Step1({ data, onChange }: { data: FormData; onChange: (patch: Partial<FormData>) => void }) {
+  const [showAcademic, setShowAcademic] = useState(
+    !!(data.college || data.department || data.semester || data.academic_year)
+  )
+
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h3 className="text-base font-semibold text-[--color-text-primary] mb-0.5">Basic Information</h3>
-        <p className="text-sm text-[--color-text-tertiary]">Tell us about the project at a high level.</p>
+        <h3 className="text-base font-semibold text-[#202124] mb-0.5">Project Details</h3>
+        <p className="text-sm text-[#6B7280]">
+          Create a project for software development, research, team collaboration, or personal productivity.
+        </p>
       </div>
       <Divider />
 
       <Input
-        label="Project Title *"
-        placeholder="e.g. Smart Campus Attendance System"
+        label="Project Name *"
+        placeholder="e.g. ApexFlow Platform, Mobile App, AI Agent"
         value={data.title}
         onChange={(e) => onChange({ title: e.target.value })}
+        autoFocus
         required
       />
 
       <Textarea
         label="Project Description"
-        placeholder="Brief overview of what this project is about…"
+        placeholder="What is this project about? What are its primary goals?"
         value={data.description}
         onChange={(e) => onChange({ description: e.target.value })}
         rows={3}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="College"
-          placeholder="e.g. MIT College of Engineering"
-          value={data.college}
-          onChange={(e) => onChange({ college: e.target.value })}
-        />
-        <Input
-          label="Department"
-          placeholder="e.g. Computer Engineering"
-          value={data.department}
-          onChange={(e) => onChange({ department: e.target.value })}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="Academic Year"
-          placeholder="e.g. 2024-2025"
-          value={data.academic_year}
-          onChange={(e) => onChange({ academic_year: e.target.value })}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
-          label="Semester"
-          placeholder="Select semester"
-          options={SEMESTER_OPTIONS}
-          value={data.semester}
-          onChange={(e) => onChange({ semester: e.target.value })}
+          label="Project Category"
+          placeholder="Select category"
+          options={CATEGORY_OPTIONS}
+          value={data.category}
+          onChange={(e) => onChange({ category: e.target.value })}
         />
-      </div>
-
-      <Select
-        label="Project Category"
-        placeholder="Select a category"
-        options={CATEGORY_OPTIONS}
-        value={data.category}
-        onChange={(e) => onChange({ category: e.target.value })}
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Start Date"
           type="date"
@@ -253,11 +228,61 @@ function Step1({ data, onChange }: { data: FormData; onChange: (patch: Partial<F
           onChange={(e) => onChange({ start_date: e.target.value })}
         />
         <Input
-          label="Final Submission Deadline"
+          label="Target Deadline"
           type="date"
           value={data.submission_deadline}
           onChange={(e) => onChange({ submission_deadline: e.target.value })}
         />
+      </div>
+
+      {/* Optional Academic / University Section */}
+      <div className="pt-2 border-t border-[#E5E7EB]">
+        <button
+          type="button"
+          onClick={() => setShowAcademic(!showAcademic)}
+          className="flex items-center gap-2 text-xs font-semibold text-[#4338CA] hover:text-[#3730A3] transition-colors"
+        >
+          <span>{showAcademic ? '− Hide' : '+ Add'} Academic / College Details (Optional)</span>
+        </button>
+
+        {showAcademic && (
+          <div className="mt-3 p-4 bg-[#F7F7F5] border border-[#E5E7EB] rounded-xl space-y-4 animate-in fade-in-0 duration-150">
+            <p className="text-xs text-[#6B7280]">
+              If this is an academic course or final-year project, you can optionally track college, department, and semester information.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="College / University"
+                placeholder="e.g. Stanford / MIT / Tech University"
+                value={data.college}
+                onChange={(e) => onChange({ college: e.target.value })}
+              />
+              <Input
+                label="Department / Faculty"
+                placeholder="e.g. Computer Science & Engineering"
+                value={data.department}
+                onChange={(e) => onChange({ department: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Academic Year"
+                placeholder="e.g. 2024-2025"
+                value={data.academic_year}
+                onChange={(e) => onChange({ academic_year: e.target.value })}
+              />
+              <Select
+                label="Semester"
+                placeholder="Select semester"
+                options={SEMESTER_OPTIONS}
+                value={data.semester}
+                onChange={(e) => onChange({ semester: e.target.value })}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -301,33 +326,33 @@ function Step2({ data, onChange }: { data: FormData; onChange: (patch: Partial<F
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h3 className="text-base font-semibold text-[--color-text-primary] mb-0.5">Team Setup</h3>
-        <p className="text-sm text-[--color-text-tertiary]">Configure your faculty guide, team members, and tech stack.</p>
+        <h3 className="text-base font-semibold text-[#202124] mb-0.5">Team & Collaboration</h3>
+        <p className="text-sm text-[#6B7280]">Configure project leads, team members, tech stack, and optional mentors.</p>
       </div>
       <Divider />
 
+      <Input
+        label="Project Lead / Creator"
+        placeholder="e.g. Your name or team leader"
+        value={data.team_leader_name}
+        onChange={(e) => onChange({ team_leader_name: e.target.value })}
+      />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Faculty Guide Name"
-          placeholder="e.g. Dr. Priya Sharma"
+          label="Mentor / Faculty Guide Name (Optional)"
+          placeholder="e.g. Dr. Priya Sharma / Advisor"
           value={data.faculty_guide_name}
           onChange={(e) => onChange({ faculty_guide_name: e.target.value })}
         />
         <Input
-          label="Faculty Guide Email"
+          label="Mentor / Guide Email (Optional)"
           type="email"
-          placeholder="faculty@college.edu"
+          placeholder="mentor@organization.edu"
           value={data.faculty_guide_contact}
           onChange={(e) => onChange({ faculty_guide_contact: e.target.value })}
         />
       </div>
-
-      <Input
-        label="Team Leader Name"
-        placeholder="e.g. Rahul Mehta"
-        value={data.team_leader_name}
-        onChange={(e) => onChange({ team_leader_name: e.target.value })}
-      />
 
       <Divider />
 

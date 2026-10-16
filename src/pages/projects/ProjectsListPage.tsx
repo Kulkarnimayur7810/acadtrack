@@ -35,14 +35,18 @@ function getStatusBadge(status: string) {
 
 function getCategoryLabel(category: string | null): string {
   const map: Record<string, string> = {
+    software: 'Software / SaaS',
     web_app: 'Web App',
     mobile_app: 'Mobile App',
     ml_ai: 'ML / AI',
+    business: 'Business & Startup',
+    research: 'Research & Study',
+    creative: 'Creative & Design',
     computer_vision: 'Computer Vision',
-    iot: 'IoT',
+    iot: 'IoT & Hardware',
     embedded_systems: 'Embedded Systems',
     data_science: 'Data Science',
-    other: 'Other',
+    other: 'Personal / General',
   }
   return category ? (map[category] ?? category) : ''
 }
