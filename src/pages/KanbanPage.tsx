@@ -69,6 +69,7 @@ import {
   Layers,
 } from 'lucide-react'
 import type { Database } from '@/lib/database.types'
+import { TimelineStudioView } from '@/components/TimelineStudioView'
 
 type Task = Database['public']['Tables']['tasks']['Row']
 type Member = Database['public']['Tables']['project_members']['Row'] & {
@@ -678,6 +679,7 @@ export default function KanbanPage() {
   const [quickAddStatus, setQuickAddStatus] = useState<KanbanStatus | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'studio' | 'kanban'>('studio')
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks(currentProject?.id)
   const { data: members = [] } = useMembers(currentProject?.id)
@@ -822,17 +824,43 @@ export default function KanbanPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-white border-b border-[#E5E7EB] shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold text-[#202124]">Kanban Board</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 bg-white border-b border-[#E5E7EB] shrink-0">
+        <div className="flex items-center gap-3">
+          {/* View Mode Switcher */}
+          <div className="flex items-center bg-[#F1F5F9] p-1 rounded-xl border border-[#E2E8F0] shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('studio')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                viewMode === 'studio'
+                  ? 'bg-white text-[#0284C7] shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              )}
+            >
+              <Sparkles size={13} className={viewMode === 'studio' ? 'text-[#00A3FF]' : 'text-[#64748B]'} />
+              <span>Timeline Studio</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('kanban')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                viewMode === 'kanban'
+                  ? 'bg-white text-[#4338CA] shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              )}
+            >
+              <Layers size={13} className={viewMode === 'kanban' ? 'text-[#4338CA]' : 'text-[#64748B]'} />
+              <span>4-Status Board</span>
+            </button>
+          </div>
+
+          <div className="hidden md:block">
             <Badge variant="default" size="sm">
-              4 Workflow States
+              {viewMode === 'studio' ? 'Interactive Roadmap' : '4 Workflow States'}
             </Badge>
           </div>
-          <p className="text-xs text-[#6B7280] mt-0.5">
-            Organized strictly into To Do, In Progress, In Review, and Done
-          </p>
         </div>
 
         {/* Search, Filter & Add Button */}
@@ -872,52 +900,64 @@ export default function KanbanPage() {
         </div>
       </div>
 
-      {/* Board Columns Canvas */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 sm:p-6 bg-[#F7F7F5]">
-        {tasksLoading ? (
-          <div className="h-full flex items-center justify-center">
-            <Spinner size="lg" />
-          </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex items-start gap-4 h-full pb-4">
-              {COLUMNS.map((col) => (
-                <KanbanColumn
-                  key={col.id}
-                  column={col}
-                  tasks={columnsWithTasks[col.id]}
-                  members={members}
-                  onOpenTask={setSelectedTask}
-                  onDeleteTask={(id) => deleteTaskMutation.mutate(id)}
-                  onQuickAdd={setQuickAddStatus}
-                />
-              ))}
+      {/* Main View Area */}
+      {viewMode === 'studio' ? (
+        <div className="flex-1 overflow-y-auto bg-[#E5F5F6]">
+          <TimelineStudioView
+            tasks={tasks}
+            members={members}
+            currentProject={currentProject}
+            onOpenTask={setSelectedTask}
+            onQuickAdd={setQuickAddStatus}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 sm:p-6 bg-[#F7F7F5]">
+          {tasksLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <Spinner size="lg" />
             </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex items-start gap-4 h-full pb-4">
+                {COLUMNS.map((col) => (
+                  <KanbanColumn
+                    key={col.id}
+                    column={col}
+                    tasks={columnsWithTasks[col.id]}
+                    members={members}
+                    onOpenTask={setSelectedTask}
+                    onDeleteTask={(id) => deleteTaskMutation.mutate(id)}
+                    onQuickAdd={setQuickAddStatus}
+                  />
+                ))}
+              </div>
 
-            <DragOverlay>
-              {activeTask ? (
-                <div className="w-72 bg-white border-2 border-[#4338CA] rounded-lg p-3.5 shadow-2xl rotate-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-[#202124]">
-                      {activeTask.title}
-                    </span>
+              <DragOverlay>
+                {activeTask ? (
+                  <div className="w-72 bg-white border-2 border-[#4338CA] rounded-lg p-3.5 shadow-2xl rotate-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-[#202124]">
+                        {activeTask.title}
+                      </span>
+                    </div>
+                    {activeTask.description && (
+                      <p className="text-[11px] text-[#6B7280] line-clamp-1">
+                        {activeTask.description}
+                      </p>
+                    )}
                   </div>
-                  {activeTask.description && (
-                    <p className="text-[11px] text-[#6B7280] line-clamp-1">
-                      {activeTask.description}
-                    </p>
-                  )}
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
-      </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+        </div>
+      )}
 
       {/* Task Detail Modal */}
       {selectedTask && (

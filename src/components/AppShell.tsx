@@ -39,7 +39,7 @@ type Project = Database['public']['Tables']['projects']['Row']
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
-  { to: '/kanban', icon: ListTodo, label: 'Kanban Board' },
+  { to: '/kanban', icon: ListTodo, label: 'Timeline & Kanban' },
   { to: '/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/team', icon: Users, label: 'Team & Workload' },
   { to: '/milestones', icon: Target, label: 'Milestones & Goals' },
