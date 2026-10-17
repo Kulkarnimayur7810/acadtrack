@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { User, Mail, Lock, AlertTriangle, BookOpen, ArrowRight } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { User, Mail, Lock, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'
 import { useAuthStore } from '@/lib/store'
 import { Button, Input } from '@/components/ui'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { setUser, setSession } = useAuthStore()
 
   const [fullName, setFullName] = useState('')
@@ -25,7 +26,7 @@ export default function RegisterPage() {
     }
 
     if (!email.trim()) {
-      setError('Please enter your college email address.')
+      setError('Please enter your email address.')
       return
     }
 
@@ -91,7 +92,8 @@ export default function RegisterPage() {
       if (activeSession) {
         setSession(activeSession)
         setUser(activeSession.user)
-        navigate('/dashboard')
+        const destination = (location.state as any)?.from?.pathname || '/dashboard'
+        navigate(destination, { replace: true })
       } else {
         // If confirmation is still strictly required on Supabase side
         setError(
@@ -109,12 +111,12 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex flex-col items-center mb-8 gap-2">
-          <div className="w-10 h-10 rounded-lg bg-[#4338CA] flex items-center justify-center shadow-xs">
-            <BookOpen className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-[#4338CA] flex items-center justify-center shadow-xs">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-[#202124] tracking-tight">AcadTrack</h1>
-            <p className="text-xs text-[#6B7280] mt-0.5">College Project Management Platform</p>
+            <h1 className="text-xl font-bold text-[#202124] tracking-tight">ApexFlow</h1>
+            <p className="text-xs text-[#6B7280] mt-0.5">Next-Gen Project Management & Productivity</p>
           </div>
         </div>
 

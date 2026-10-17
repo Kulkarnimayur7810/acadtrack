@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, AlertTriangle, BookOpen, ArrowRight } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Mail, Lock, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient'
 import { useAuthStore } from '@/lib/store'
 import { Button, Input } from '@/components/ui'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { setUser, setSession, setProfile } = useAuthStore()
 
   const [email, setEmail] = useState('')
@@ -62,7 +63,8 @@ export default function LoginPage() {
         }
 
         setLoading(false)
-        navigate('/dashboard')
+        const destination = (location.state as any)?.from?.pathname || '/dashboard'
+        navigate(destination, { replace: true })
       } else {
         setLoading(false)
         setError('No active session returned. Please verify credentials.')
@@ -78,12 +80,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex flex-col items-center mb-8 gap-2">
-          <div className="w-10 h-10 rounded-lg bg-[#4338CA] flex items-center justify-center shadow-xs">
-            <BookOpen className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-[#4338CA] flex items-center justify-center shadow-xs">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-[#202124] tracking-tight">AcadTrack</h1>
-            <p className="text-xs text-[#6B7280] mt-0.5">College Project Management Platform</p>
+            <h1 className="text-xl font-bold text-[#202124] tracking-tight">ApexFlow</h1>
+            <p className="text-xs text-[#6B7280] mt-0.5">Next-Gen Project Management & Productivity</p>
           </div>
         </div>
 

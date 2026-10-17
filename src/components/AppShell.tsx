@@ -111,6 +111,17 @@ export function AppShell({ children }: AppShellProps) {
     setProjectMenuOpen(false)
   }
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.warn('Sign out error:', err)
+    } finally {
+      signOut()
+      navigate('/login')
+    }
+  }
+
   return (
     <div className="flex h-screen bg-[#F7F7F5] overflow-hidden text-[#202124]">
       {/* Mobile backdrop */}
@@ -347,10 +358,7 @@ export function AppShell({ children }: AppShellProps) {
             </button>
 
             <button
-              onClick={() => {
-                signOut()
-                navigate('/login')
-              }}
+              onClick={handleSignOut}
               className="p-2 rounded-lg text-[#9CA3AF] hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
               title="Sign out"
               aria-label="Sign out"
@@ -400,8 +408,7 @@ export function AppShell({ children }: AppShellProps) {
                   type="button"
                   onClick={() => {
                     setProfileMenuOpen(false)
-                    signOut()
-                    navigate('/login')
+                    handleSignOut()
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium text-left"
                 >

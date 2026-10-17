@@ -10,9 +10,13 @@ interface AuthState {
   user: User | null
   session: Session | null
   profile: Profile | null
+  isInitialized: boolean
+  isLoading: boolean
   setUser: (user: User | null) => void
   setSession: (session: Session | null) => void
   setProfile: (profile: Profile | null) => void
+  setIsInitialized: (isInitialized: boolean) => void
+  setIsLoading: (isLoading: boolean) => void
   signOut: () => void
 }
 
@@ -20,10 +24,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   profile: null,
+  isInitialized: false,
+  isLoading: true,
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setProfile: (profile) => set({ profile }),
-  signOut: () => set({ user: null, session: null, profile: null }),
+  setIsInitialized: (isInitialized) => set({ isInitialized }),
+  setIsLoading: (isLoading) => set({ isLoading }),
+  signOut: () => set({ user: null, session: null, profile: null, isLoading: false, isInitialized: true }),
 }))
 
 interface ProjectState {
